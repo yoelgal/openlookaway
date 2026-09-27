@@ -10,7 +10,7 @@ swift build -c release --package-path app --arch arm64 --arch x86_64
 
 rm -rf dist && mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp app/.build/apple/Products/Release/OpenLookAway "$APP/Contents/MacOS/"
-cp app/AppIcon.icns "$APP/Contents/Resources/"
+cp app/AppIcon.icns site/assets/wall-blue.jpg "$APP/Contents/Resources/"
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

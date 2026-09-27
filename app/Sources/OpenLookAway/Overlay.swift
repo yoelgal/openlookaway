@@ -1,4 +1,5 @@
 import AppKit
+import CoreImage
 import SwiftUI
 
 private final class KeyWindow: NSWindow {
@@ -9,6 +10,8 @@ private final class KeyWindow: NSWindow {
 @MainActor
 enum Overlay {
     private static var windows: [NSWindow] = []
+    private static var escMonitor: Any?
+    private static var lastEsc = Date.distantPast
 
     static func show(_ s: Scheduler) {
         hide()
@@ -19,7 +22,7 @@ enum Overlay {
             w.isOpaque = false
             w.backgroundColor = .clear
             w.isReleasedWhenClosed = false
-            w.contentView = NSHostingView(rootView: BreakView(s: s))
+            w.contentView = NSHostingView(rootView: BreakView(s: s, backdrop: Backdrop.image(for: screen)))
             w.setFrame(screen.frame, display: true)
             w.alphaValue = 0
             w.orderFrontRegardless()
@@ -28,168 +31,181 @@ enum Overlay {
         }
         NSApp.activate(ignoringOtherApps: true)
         windows.first?.makeKey()
+        escMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { e in
+            guard e.keyCode == 53 else { return e }
+            if Date.now.timeIntervalSince(lastEsc) < 1 { doubleEscape(s) } else { lastEsc = .now }
+            return nil
+        }
     }
 
     static func hide() {
+        if let m = escMonitor { NSEvent.removeMonitor(m); escMonitor = nil }
         let old = windows
         windows = []
         NSAnimationContext.runAnimationGroup({ ctx in
-            ctx.duration = 0.4
+            ctx.duration = 0.5
             old.forEach { $0.animator().alphaValue = 0 }
         }, completionHandler: { old.forEach { $0.orderOut(nil) } })
+    }
+
+    private static func doubleEscape(_ s: Scheduler) {
+        let d = UserDefaults.standard
+        if d.integer(forKey: Key.escAction) == 1, s.snoozesLeft > 0 { return s.snooze(minutes: 5) }
+        if BreakView.canSkip(s) { s.skipNext() }
+    }
+}
+
+/// Break background: the user's wallpaper blurred, a gradient, or their own image.
+@MainActor
+enum Backdrop {
+    private static var cache: [String: NSImage] = [:]
+
+    static func image(for screen: NSScreen) -> NSImage? {
+        let d = UserDefaults.standard
+        switch d.integer(forKey: Key.background) {
+        case 1: return nil
+        case 2:
+            let path = d.string(forKey: Key.customImage) ?? ""
+            if !path.isEmpty, let img = blurred(URL(fileURLWithPath: path), radius: 0) { return img }
+            fallthrough
+        default:
+            if let url = NSWorkspace.shared.desktopImageURL(for: screen), let img = blurred(url, radius: 60) { return img }
+            return Bundle.main.url(forResource: "wall-blue", withExtension: "jpg").flatMap { blurred($0, radius: 60) }
+        }
+    }
+
+    static func blurred(_ url: URL, radius: Double) -> NSImage? {
+        let key = "\(url.path)#\(radius)"
+        if let hit = cache[key] { return hit }
+        guard var ci = CIImage(contentsOf: url) else { return nil }
+        // Blur a small copy: faster and just as smooth.
+        let scale = min(1, 1280 / ci.extent.width)
+        ci = ci.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+        let extent = ci.extent
+        if radius > 0 {
+            ci = ci.clampedToExtent().applyingGaussianBlur(sigma: radius * scale * 2).cropped(to: extent)
+                .applyingFilter("CIColorControls", parameters: [kCIInputSaturationKey: 1.5, kCIInputBrightnessKey: -0.08])
+        }
+        guard let cg = CIContext().createCGImage(ci, from: extent) else { return nil }
+        let img = NSImage(cgImage: cg, size: extent.size)
+        cache[key] = img
+        return img
     }
 }
 
 struct BreakView: View {
     let s: Scheduler
-    @AppStorage(Key.allowSkip) private var allowSkip = true
+    let backdrop: NSImage?
+    @AppStorage(Key.breakMode) private var mode = 0
+
+    static let balancedDelay = 5
+
+    static func canSkip(_ s: Scheduler) -> Bool {
+        switch UserDefaults.standard.integer(forKey: Key.breakMode) {
+        case 2: return false
+        case 1: return s.breakElapsed >= balancedDelay
+        default: return true
+        }
+    }
 
     var body: some View {
         ZStack {
-            Blur().ignoresSafeArea()
-            LinearGradient(colors: [.indigo.opacity(0.55), .teal.opacity(0.35)], startPoint: .topLeading, endPoint: .bottomTrailing)
-                .ignoresSafeArea()
-            VStack(spacing: 28) {
-                Image(systemName: s.isLongBreak ? "figure.walk" : "eye")
-                    .font(.system(size: 44, weight: .light))
-                Text(s.isLongBreak ? "Time for a longer break" : "Look away")
-                    .font(.system(size: 48, weight: .semibold, design: .rounded))
+            background
+            TimelineView(.everyMinute) { ctx in
+                Label(ctx.date.formatted(date: .omitted, time: .shortened), systemImage: "clock")
+                    .font(.system(size: 13, weight: .medium))
+                    .opacity(0.7)
+            }
+            .frame(maxHeight: .infinity, alignment: .top)
+            .padding(.top, 36)
+
+            VStack(spacing: 14) {
+                Text(s.title)
+                    .font(.system(size: 44, weight: .bold))
                 Text(s.message)
-                    .font(.title2)
-                    .opacity(0.85)
+                    .font(.system(size: 17, weight: .medium))
+                    .opacity(0.8)
+                    .frame(maxWidth: 560)
+                Capsule().fill(.white.opacity(0.3)).frame(width: 60, height: 2).padding(.vertical, 14)
                 Text(clock(s.remaining))
-                    .font(.system(size: 96, weight: .thin, design: .rounded))
+                    .font(.system(size: 34, weight: .bold, design: .rounded))
                     .monospacedDigit()
+                    .foregroundStyle(Color.breakBlue)
                     .contentTransition(.numericText(countsDown: true))
                     .animation(.default, value: s.remaining)
-                HStack(spacing: 12) {
-                    Button("+1 min") { s.snooze(minutes: 1) }
-                    Button("+5 min") { s.snooze(minutes: 5) }
-                    if allowSkip {
-                        Button("Skip") { s.skipNext() }.keyboardShortcut(.escape, modifiers: [])
+            }
+            .multilineTextAlignment(.center)
+            .offset(y: -40)
+
+            VStack(spacing: 14) {
+                HStack(spacing: 10) {
+                    if mode != 2 {
+                        Button { s.skipNext() } label: {
+                            HStack(spacing: 6) {
+                                if mode == 1 && s.breakElapsed < Self.balancedDelay {
+                                    Circle().trim(from: 0, to: Double(s.breakElapsed) / Double(Self.balancedDelay))
+                                        .stroke(.white, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                                        .rotationEffect(.degrees(-90))
+                                        .frame(width: 12, height: 12)
+                                        .animation(.linear(duration: 1), value: s.breakElapsed)
+                                } else {
+                                    Image(systemName: "chevron.forward.2")
+                                }
+                                Text("Skip Break")
+                            }
+                        }
+                        .disabled(!Self.canSkip(s))
+                    }
+                    Button { System.lockScreen() } label: { Label("Lock Screen", systemImage: "lock") }
+                }
+                .buttonStyle(GlassPill())
+
+                VStack(spacing: 5) {
+                    Text(s.snoozesLeft == 1 ? "1 snooze left today" : "\(s.snoozesLeft) snoozes left today")
+                    if mode != 2 {
+                        HStack(spacing: 5) {
+                            Text("Press")
+                            Text("Esc").font(.system(size: 10, weight: .semibold))
+                                .padding(.horizontal, 5).padding(.vertical, 1)
+                                .background(RoundedRectangle(cornerRadius: 4).strokeBorder(.white.opacity(0.4)))
+                            Text(UserDefaults.standard.integer(forKey: Key.escAction) == 1 ? "twice to snooze 5 minutes" : "twice to skip the break")
+                        }
                     }
                 }
-                .buttonStyle(Pill())
-                .padding(.top, 12)
+                .font(.system(size: 11, weight: .medium))
+                .opacity(0.55)
             }
-            .foregroundStyle(.white)
-            .multilineTextAlignment(.center)
-            .padding(40)
+            .frame(maxHeight: .infinity, alignment: .bottom)
+            .padding(.bottom, 64)
         }
+        .foregroundStyle(.white)
         .environment(\.colorScheme, .dark)
     }
-}
 
-struct Pill: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.body.weight(.medium))
-            .padding(.horizontal, 18)
-            .padding(.vertical, 9)
-            .background(.white.opacity(configuration.isPressed ? 0.3 : 0.16), in: Capsule())
-            .contentShape(Capsule())
+    @ViewBuilder private var background: some View {
+        if let backdrop {
+            Image(nsImage: backdrop).resizable().aspectRatio(contentMode: .fill).ignoresSafeArea()
+            Color.black.opacity(0.32).ignoresSafeArea()
+        } else {
+            ZStack {
+                Blur()
+                LinearGradient(colors: [Color(red: 0.16, green: 0.10, blue: 0.45), Color(red: 0.55, green: 0.18, blue: 0.55), Color(red: 0.95, green: 0.55, blue: 0.35)],
+                               startPoint: .topLeading, endPoint: .bottomTrailing)
+                    .opacity(0.85)
+            }
+            .ignoresSafeArea()
+        }
     }
 }
 
 struct Blur: NSViewRepresentable {
+    var material = NSVisualEffectView.Material.fullScreenUI
     func makeNSView(context: Context) -> NSVisualEffectView {
         let v = NSVisualEffectView()
-        v.material = .fullScreenUI
+        v.material = material
         v.blendingMode = .behindWindow
         v.state = .active
-        v.appearance = NSAppearance(named: .darkAqua)
         return v
     }
     func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
-}
-
-/// Small floating card in the top-right corner: pre-break heads-up and wellness nudges.
-@MainActor
-enum HUD {
-    private static var panel: NSPanel?
-    private static var isHeadsUp = false
-    private static var dismissWork: DispatchWorkItem?
-
-    static func headsUp(_ s: Scheduler) {
-        present(AnyView(HeadsUpView(s: s)), autoHide: nil)
-        isHeadsUp = true
-    }
-
-    static func remind(_ text: String, symbol: String) {
-        guard !isHeadsUp else { return }
-        present(AnyView(Card {
-            Label(text, systemImage: symbol).font(.body.weight(.medium))
-        }), autoHide: 6)
-    }
-
-    static func hideHeadsUp() { if isHeadsUp { hide() } }
-
-    static func hide() {
-        dismissWork?.cancel()
-        isHeadsUp = false
-        guard let p = panel else { return }
-        panel = nil
-        NSAnimationContext.runAnimationGroup({ $0.duration = 0.25; p.animator().alphaValue = 0 },
-                                             completionHandler: { p.orderOut(nil) })
-    }
-
-    private static func present(_ view: AnyView, autoHide: Double?) {
-        hide()
-        let host = NSHostingView(rootView: view)
-        let size = host.fittingSize
-        let p = NSPanel(contentRect: NSRect(origin: .zero, size: size),
-                        styleMask: [.nonactivatingPanel, .borderless], backing: .buffered, defer: false)
-        p.level = .statusBar
-        p.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-        p.isOpaque = false
-        p.backgroundColor = .clear
-        p.hasShadow = true
-        p.isReleasedWhenClosed = false
-        p.contentView = host
-        if let vf = (NSScreen.main ?? NSScreen.screens.first)?.visibleFrame {
-            p.setFrameOrigin(NSPoint(x: vf.maxX - size.width - 16, y: vf.maxY - size.height - 12))
-        }
-        p.alphaValue = 0
-        p.orderFrontRegardless()
-        NSAnimationContext.runAnimationGroup { $0.duration = 0.25; p.animator().alphaValue = 1 }
-        panel = p
-        if let t = autoHide {
-            let work = DispatchWorkItem { hide() }
-            dismissWork = work
-            DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: work)
-        }
-    }
-}
-
-private struct Card<Content: View>: View {
-    @ViewBuilder var content: Content
-    var body: some View {
-        content
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .frame(minWidth: 260, alignment: .leading)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
-            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(.white.opacity(0.1)))
-            .padding(6)
-    }
-}
-
-private struct HeadsUpView: View {
-    let s: Scheduler
-    var body: some View {
-        Card {
-            VStack(alignment: .leading, spacing: 10) {
-                Label("Break in \(max(s.remaining, 0))s", systemImage: "eye")
-                    .font(.headline)
-                    .monospacedDigit()
-                HStack(spacing: 6) {
-                    Button("Start now") { s.startBreak() }.buttonStyle(.borderedProminent)
-                    Button("+1m") { s.snooze(minutes: 1) }
-                    Button("+5m") { s.snooze(minutes: 5) }
-                    Button("Skip") { s.skipNext() }
-                }
-                .controlSize(.small)
-            }
-        }
-    }
 }

@@ -7,26 +7,56 @@ enum Key {
     static let breakSeconds = "breakSeconds"
     static let longBreakEvery = "longBreakEvery"
     static let longBreakMinutes = "longBreakMinutes"
-    static let warnSeconds = "warnSeconds"
+    static let breakMode = "breakMode"            // 0 casual, 1 balanced, 2 hardcore
+    static let snoozesPerDay = "snoozesPerDay"
+    static let escAction = "escAction"            // 0 skip, 1 snooze 5 min
+    static let lockOnBreak = "lockOnBreak"
+    static let headsUpLead = "headsUpLead"        // seconds before a break, 0 = off
+    static let headsUpVisible = "headsUpVisible"  // seconds the card stays up
+    static let floatingCountdown = "floatingCountdown"
+    static let alertPosition = "alertPosition"    // 0 left, 1 centre, 2 right
     static let idleResetMinutes = "idleResetMinutes"
     static let pauseForCalls = "pauseForCalls"
+    static let pauseForVideo = "pauseForVideo"
     static let pauseForFullscreen = "pauseForFullscreen"
     static let blinkMinutes = "blinkMinutes"
     static let postureMinutes = "postureMinutes"
-    static let allowSkip = "allowSkip"
-    static let playSound = "playSound"
-    static let showTimerInMenuBar = "showTimerInMenuBar"
+    static let soundStart = "soundStart"
+    static let soundEnd = "soundEnd"
+    static let soundName = "soundName"
+    static let volume = "volume"
+    static let background = "background"          // 0 blurred wallpaper, 1 gradient, 2 custom image
+    static let customImage = "customImage"
     static let customMessages = "customMessages"
+    static let showTimerInMenuBar = "showTimerInMenuBar"
 
     static let defaults: [String: Any] = [
         workMinutes: 20, breakSeconds: 20, longBreakEvery: 3, longBreakMinutes: 5,
-        warnSeconds: 10, idleResetMinutes: 5, pauseForCalls: true, pauseForFullscreen: false,
-        blinkMinutes: 0, postureMinutes: 30, allowSkip: true, playSound: true,
-        showTimerInMenuBar: true, customMessages: "",
+        breakMode: 0, snoozesPerDay: 3, escAction: 0, lockOnBreak: false,
+        headsUpLead: 60, headsUpVisible: 8, floatingCountdown: true, alertPosition: 1,
+        idleResetMinutes: 5, pauseForCalls: true, pauseForVideo: false, pauseForFullscreen: false,
+        blinkMinutes: 0, postureMinutes: 30,
+        soundStart: false, soundEnd: true, soundName: "Glass", volume: 0.7,
+        background: 0, customImage: "", customMessages: "", showTimerInMenuBar: true,
     ]
 }
 
 private let d = UserDefaults.standard
+
+/// Today's numbers, persisted as JSON and reset at midnight.
+struct DayStats: Codable {
+    var day = ""
+    var taken = 0, takenSeconds = 0
+    var natural = 0, naturalSeconds = 0
+    var skipped = 0, snoozed = 0
+    var screenSeconds = 0, longestStretch = 0
+
+    /// 100 = perfect pacing. Skips, snoozes and very long stretches cost points.
+    var score: Int {
+        let overtime = max(0, longestStretch - 2 * d.integer(forKey: Key.workMinutes) * 60) / 60
+        return max(0, min(100, 100 - skipped * 12 - snoozed * 5 - min(overtime, 30)))
+    }
+}
 
 @MainActor @Observable
 final class Scheduler {
@@ -37,27 +67,36 @@ final class Scheduler {
     private(set) var phase = Phase.working
     /// Seconds until the next break while working, seconds left while on a break.
     private(set) var remaining: Int
+    private(set) var breakLength = 0
     private(set) var isLongBreak = false
+    private(set) var title = ""
     private(set) var message = ""
     /// Manual pause. `.distantFuture` means "until I resume".
     private(set) var pausedUntil: Date?
     /// Why the timer is currently frozen on its own ("In a call", "Away"...).
     private(set) var autoPauseReason: String?
-    private(set) var takenToday = 0
-    private(set) var skippedToday = 0
+    private(set) var stats = DayStats()
 
     private var breaksSinceLong = 0
     private var warned = false
+    private var away: Date?
+    private var stretch = 0
     private var nextBlink = Date.distantFuture
     private var nextPosture = Date.distantFuture
     private var previousApp: NSRunningApplication?
 
-    private var workSeconds: Int { d.integer(forKey: Key.workMinutes) * 60 }
+    var workSeconds: Int { d.integer(forKey: Key.workMinutes) * 60 }
+    var snoozesLeft: Int { max(0, d.integer(forKey: Key.snoozesPerDay) - stats.snoozed) }
+    var isPaused: Bool { pausedUntil != nil }
+    var breakElapsed: Int { breakLength - remaining }
 
     private init() {
         d.register(defaults: Key.defaults)
         remaining = d.integer(forKey: Key.workMinutes) * 60
-        loadStats()
+        if let data = d.data(forKey: "stats"), let s = try? JSONDecoder().decode(DayStats.self, from: data), s.day == Self.today {
+            stats = s
+        }
+        stats.day = Self.today
         resetReminders()
         Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
             MainActor.assumeIsolated { Scheduler.shared.tick() }
@@ -71,8 +110,6 @@ final class Scheduler {
         }
     }
 
-    var isPaused: Bool { pausedUntil != nil }
-
     var status: String {
         if phase == .onBreak { return "On a break" }
         if let until = pausedUntil {
@@ -85,7 +122,7 @@ final class Scheduler {
     // MARK: - Loop
 
     private func tick() {
-        rollStatsDay()
+        if stats.day != Self.today { stats = DayStats(day: Self.today); save() }
         if phase == .onBreak {
             remaining -= 1
             if remaining <= 0 { endBreak(completed: true) }
@@ -97,39 +134,62 @@ final class Scheduler {
             restart()
         }
 
-        if System.idleSeconds() >= Double(d.integer(forKey: Key.idleResetMinutes) * 60) {
+        let idle = System.idleSeconds()
+        if idle >= Double(d.integer(forKey: Key.idleResetMinutes) * 60) {
             // They walked away: that was the break. Start fresh when they're back.
+            if away == nil {
+                away = Date(timeIntervalSinceNow: -idle)
+                stats.natural += 1
+                save()
+            }
             autoPauseReason = "Away"
             restart()
             return
         }
-        if d.bool(forKey: Key.pauseForCalls) && System.micInUse() {
-            autoPauseReason = "In a call"
-            HUD.hide()
-            return
+        if let since = away {
+            stats.naturalSeconds += Int(Date.now.timeIntervalSince(since))
+            away = nil
+            save()
         }
-        if d.bool(forKey: Key.pauseForFullscreen) && System.frontAppIsFullscreen() {
-            autoPauseReason = "Fullscreen app"
-            HUD.hide()
+        if let reason = autoPause() {
+            autoPauseReason = reason
+            HUD.hideAlerts()
             return
         }
         autoPauseReason = nil
         remaining -= 1
 
+        if idle < 60 {
+            stats.screenSeconds += 1
+            stretch += 1
+            stats.longestStretch = max(stats.longestStretch, stretch)
+            if stats.screenSeconds % 30 == 0 { save() }
+        }
+
         if Date.now >= nextBlink {
-            HUD.remind("Blink slowly a few times", symbol: "eye")
+            HUD.nudge(.blink)
             nextBlink = next(Key.blinkMinutes)
         } else if Date.now >= nextPosture {
-            HUD.remind("Sit up tall, shoulders down", symbol: "figure.stand")
+            HUD.nudge(.posture)
             nextPosture = next(Key.postureMinutes)
         }
 
-        let warn = d.integer(forKey: Key.warnSeconds)
-        if warn > 0, !warned, remaining <= warn, remaining > 0 {
+        let lead = d.integer(forKey: Key.headsUpLead)
+        if lead > 0, !warned, remaining <= lead, remaining > 5 {
             warned = true
             HUD.headsUp(self)
         }
+        if d.bool(forKey: Key.floatingCountdown), remaining <= 5, remaining > 0 {
+            HUD.floatingCountdown(self)
+        }
         if remaining <= 0 { startBreak() }
+    }
+
+    private func autoPause() -> String? {
+        if d.bool(forKey: Key.pauseForCalls) && System.micInUse() { return "In a call" }
+        if d.bool(forKey: Key.pauseForVideo) && System.videoPlaying() { return "Watching a video" }
+        if d.bool(forKey: Key.pauseForFullscreen) && System.frontAppIsFullscreen() { return "Fullscreen app" }
+        return nil
     }
 
     // MARK: - Actions
@@ -137,50 +197,60 @@ final class Scheduler {
     func startBreak() {
         let every = d.integer(forKey: Key.longBreakEvery)
         isLongBreak = every > 0 && breaksSinceLong + 1 >= every
-        remaining = isLongBreak ? d.integer(forKey: Key.longBreakMinutes) * 60 : d.integer(forKey: Key.breakSeconds)
-        message = pickMessage()
+        breakLength = isLongBreak ? d.integer(forKey: Key.longBreakMinutes) * 60 : d.integer(forKey: Key.breakSeconds)
+        remaining = breakLength
+        (title, message) = pickCopy()
         phase = .onBreak
         pausedUntil = nil
-        HUD.hide()
+        HUD.hideAlerts()
         previousApp = NSWorkspace.shared.frontmostApplication
         Overlay.show(self)
+        if d.bool(forKey: Key.soundStart) { playSound() }
+        if d.bool(forKey: Key.lockOnBreak) { System.lockScreen() }
     }
 
     func endBreak(completed: Bool) {
         if completed {
-            takenToday += 1
+            stats.taken += 1
+            stats.takenSeconds += breakLength
             breaksSinceLong = isLongBreak ? 0 : breaksSinceLong + 1
-            if d.bool(forKey: Key.playSound) { NSSound(named: "Glass")?.play() }
+            if d.bool(forKey: Key.soundEnd) { playSound() }
         } else {
-            skippedToday += 1
+            stats.skipped += 1
         }
-        saveStats()
+        save()
         phase = .working
         Overlay.hide()
         restart()
         previousApp?.activate()
     }
 
-    /// Push the upcoming (or current) break back by some minutes.
+    /// Push the upcoming (or current) break back. Uses one of today's snoozes.
     func snooze(minutes: Int) {
+        guard snoozesLeft > 0 else { return }
+        stats.snoozed += 1
+        save()
         if phase == .onBreak {
             phase = .working
             Overlay.hide()
             previousApp?.activate()
         }
-        HUD.hide()
+        HUD.hideAlerts()
         remaining = minutes * 60
         warned = false
     }
 
     func skipNext() {
-        HUD.hide()
-        if phase == .onBreak { endBreak(completed: false) } else { skippedToday += 1; saveStats(); restart() }
+        HUD.hideAlerts()
+        if phase == .onBreak { return endBreak(completed: false) }
+        stats.skipped += 1
+        save()
+        restart()
     }
 
     func pause(minutes: Int?) {
         if phase == .onBreak { endBreak(completed: false) }
-        HUD.hide()
+        HUD.hideAlerts()
         pausedUntil = minutes.map { .now.addingTimeInterval(Double($0) * 60) } ?? .distantFuture
     }
 
@@ -193,11 +263,32 @@ final class Scheduler {
         guard phase == .working else { return }
         remaining = workSeconds
         warned = false
-        HUD.hideHeadsUp()
+        stretch = 0
+        HUD.hideAlerts()
         resetReminders()
     }
 
+    func playSound() {
+        guard let s = NSSound(named: d.string(forKey: Key.soundName) ?? "Glass") else { return }
+        s.volume = d.float(forKey: Key.volume)
+        s.play()
+    }
+
+    /// Puts the scheduler in a given state for `--snapshots`.
+    func stage(remaining: Int, onBreak: Bool = false) {
+        phase = onBreak ? .onBreak : .working
+        breakLength = 20
+        self.remaining = remaining
+        (title, message) = Self.copy[0]
+        stats = DayStats(day: Self.today, taken: 9, takenSeconds: 180, natural: 3, naturalSeconds: 2460,
+                         skipped: 1, snoozed: 1, screenSeconds: 18900, longestStretch: 1920)
+    }
+
     // MARK: - Helpers
+
+    private func save() {
+        d.set(try? JSONEncoder().encode(stats), forKey: "stats")
+    }
 
     private func next(_ key: String) -> Date {
         let m = d.integer(forKey: key)
@@ -209,47 +300,39 @@ final class Scheduler {
         nextPosture = next(Key.postureMinutes)
     }
 
-    private func pickMessage() -> String {
-        if isLongBreak { return "Stand up, stretch, and move around for a few minutes." }
+    private func pickCopy() -> (String, String) {
+        if isLongBreak { return ("Time for a longer break", "Stand up, stretch, and walk around for a few minutes.") }
+        let (t, m) = Self.copy.randomElement()!
         let custom = (d.string(forKey: Key.customMessages) ?? "")
             .split(separator: "\n").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
-        return (custom.isEmpty ? Self.messages : custom).randomElement()!
+        return (t, custom.randomElement() ?? m)
     }
 
-    static let messages = [
-        "Look at something at least 20 feet away.",
-        "Let your eyes rest on the horizon.",
-        "Blink slowly. Unclench your jaw.",
-        "Roll your shoulders back and breathe out.",
-        "Look out a window for a moment.",
-        "Relax your face and soften your gaze.",
+    static let copy = [
+        ("Rest your eyes", "Pick something far away and let your focus soften until the timer ends."),
+        ("Find the horizon", "Look out of a window or across the room. Let your eyes wander."),
+        ("Look far away", "Twenty feet or more. Your eye muscles relax when they focus far."),
+        ("Blink and breathe", "Slow blinks, slow breaths. The screen will still be here."),
+        ("Soften your gaze", "Unclench your jaw, drop your shoulders, look into the distance."),
     ]
 
-    // Stats reset at midnight.
-    private var today: String { Date.now.formatted(.iso8601.year().month().day()) }
+    static let headsUpLines = [
+        "Nearly there. Finish your thought.",
+        "A short break is coming up.",
+        "Your eyes will thank you in a moment.",
+        "Wrap up that sentence. Break soon.",
+    ]
 
-    private func loadStats() {
-        guard d.string(forKey: "statsDay") == today else { return }
-        takenToday = d.integer(forKey: "takenToday")
-        skippedToday = d.integer(forKey: "skippedToday")
-    }
-
-    private func saveStats() {
-        d.set(today, forKey: "statsDay")
-        d.set(takenToday, forKey: "takenToday")
-        d.set(skippedToday, forKey: "skippedToday")
-    }
-
-    private func rollStatsDay() {
-        if d.string(forKey: "statsDay") != today, takenToday + skippedToday > 0 {
-            takenToday = 0
-            skippedToday = 0
-            saveStats()
-        }
-    }
+    private static var today: String { Date.now.formatted(.iso8601.year().month().day()) }
 }
 
 func clock(_ seconds: Int) -> String {
     let s = max(seconds, 0)
-    return s >= 3600 ? String(format: "%d:%02d:%02d", s / 3600, s / 60 % 60, s % 60) : String(format: "%d:%02d", s / 60, s % 60)
+    return s >= 3600 ? String(format: "%d:%02d:%02d", s / 3600, s / 60 % 60, s % 60) : String(format: "%02d:%02d", s / 60, s % 60)
+}
+
+/// "1h 12m", "45m", "30s".
+func duration(_ seconds: Int) -> String {
+    if seconds >= 3600 { return "\(seconds / 3600)h \(seconds / 60 % 60)m" }
+    return seconds >= 60 ? "\(seconds / 60)m" : "\(seconds)s"
 }

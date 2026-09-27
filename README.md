@@ -14,7 +14,7 @@ Paste this into Terminal:
 curl -fsSL https://lookaway.yoelgal.com/install.sh | bash
 ```
 
-That's it. It downloads the latest release to `/Applications` and opens it. Look for the eye in your menu bar.
+That's it. It downloads the latest release to `/Applications` and opens it. Look for the little face in your menu bar.
 
 Or with Homebrew: `brew install --cask yoelgal/tap/openlookaway`
 
@@ -37,15 +37,15 @@ Or run this after dragging it to Applications: `xattr -dr com.apple.quarantine "
 
 ## Features
 
-- **20-20-20 breaks.** A gentle full-screen break every 20 minutes (configurable), with longer breaks every few rounds.
-- **Heads-up first.** A small card appears a few seconds before each break so you can finish your sentence, snooze, or skip.
-- **Smart pause.** Pauses automatically during calls and meetings (mic in use) and, optionally, when an app is fullscreen.
-- **Knows when you're away.** Stepping away or sleeping your Mac counts as a break, and the timer starts fresh.
-- **Blink and posture nudges.** Optional quiet reminders in the corner.
-- **Your messages.** Write your own break prompts.
-- **Menu bar native.** Countdown in the menu bar, pause for 30m / 1h / 2h, take a break now, and see today's stats.
-- **Private.** No account, no analytics, no network calls except checking GitHub for updates.
-- **Tiny.** No dependencies and no Electron. It's about 700 lines of Swift.
+- **Gentle breaks.** Every 20 minutes (you choose), your wallpaper blurs into a calm break screen with a countdown. Longer stretch breaks every few rounds.
+- **A heads-up first.** A card drops in before each break: start now, or push it back 1, 5 or 15 minutes. In the last five seconds a small countdown follows your cursor.
+- **Your rules.** Casual (skip anytime), Balanced (skip after a pause) or Hardcore (no skips), plus a daily snooze budget. Double Esc to skip or snooze, and one click to lock your Mac.
+- **Smart pause.** Waits during calls and meetings, and optionally during video playback or fullscreen apps. Stepping away counts as a natural break.
+- **Posture and blink nudges.** Little animated reminders that appear for a few seconds and get out of your way.
+- **Menu bar native.** Countdown in the menu bar; a panel with a progress ring, pause and skip, and Today's Screen Score with break and screen-time stats.
+- **Make it yours.** Break-screen backgrounds (blurred wallpaper, gradient, or your own image), custom messages, and sounds.
+- **Private.** No account and no analytics. The only network call checks GitHub for updates.
+- **Native and tiny.** Swift and SwiftUI, no dependencies, no Electron.
 
 ## Update
 

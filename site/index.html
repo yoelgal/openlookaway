@@ -4,217 +4,1063 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OpenLookAway: a free, open-source break reminder for Mac</title>
-<meta name="description" content="Rest your eyes, fix your posture, and keep your flow. OpenLookAway is a free, open-source break reminder that lives in your Mac menu bar.">
-<meta property="og:title" content="OpenLookAway">
-<meta property="og:description" content="A free, open-source break reminder for your Mac. One command to install.">
-<meta property="og:image" content="https://lookaway.yoelgal.com/icon.png">
-<link rel="icon" href="/icon.png">
+<meta name="description" content="OpenLookAway is a free, open-source break reminder for macOS. Eye breaks, posture and blink nudges, and smart pausing during calls and videos. Native Swift, MIT licensed, no account.">
+<meta name="theme-color" content="#0a0a0b">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://lookaway.yoelgal.com/">
+<meta property="og:title" content="OpenLookAway: a free, open-source break reminder for Mac">
+<meta property="og:description" content="Eye breaks, posture and blink nudges, and smart pausing. Native Swift, MIT licensed, no account. One command to install.">
+<meta property="og:image" content="https://lookaway.yoelgal.com/assets/icon.png">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/png" href="/assets/favicon.png">
+<link rel="apple-touch-icon" href="/assets/icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #f5f3ee; --ink: #16151a; --muted: #6b6972; --line: #e2dfd7; --card: #fffdf9;
-    --indigo: #4d45d9; --teal: #1fb3ad;
-  }
-  * { box-sizing: border-box; margin: 0; }
-  html { scroll-behavior: smooth; }
-  body { background: var(--bg); color: var(--ink); font: 17px/1.6 Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
-  a { color: inherit; }
-  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
-  .serif { font-family: "Instrument Serif", Georgia, serif; font-weight: 400; letter-spacing: -0.01em; }
+:root{
+  --bg:#0a0a0b; --card:#1b191c; --line:rgba(255,255,255,.08); --muted:#a1a0a6; --dim:#77767c;
+  --pink:#E64FD2; --orange:#F7A546; --grad:linear-gradient(135deg,#E64FD2,#F7A546); --blue:#0A84FF;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --serif:"Instrument Serif",Georgia,serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:100px}
+body{background:var(--bg);color:#fff;font:400 16px/1.5 Inter,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+img,svg{display:block}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid #fff;outline-offset:3px;border-radius:8px}
+.container{width:min(1200px,100% - 48px);margin-inline:auto}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.ic{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.mono{font-family:var(--mono)}
+em.serif{font-family:var(--serif);font-style:italic;font-weight:400;letter-spacing:-.01em;padding-right:.04em}
+h1,h2,h3{letter-spacing:-.03em;line-height:1.1}
+h2{font-size:clamp(32px,4.2vw,44px);font-weight:700;text-align:center}
+.sub{color:var(--muted);font-size:clamp(17px,1.6vw,20px);line-height:1.6;text-align:center;max-width:680px;margin:22px auto 0;letter-spacing:-.01em}
+section{position:relative}
 
-  nav { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; text-decoration: none; }
-  .brand img { width: 30px; height: 30px; }
-  nav .links { display: flex; gap: 26px; font-size: 15px; color: var(--muted); }
-  nav .links a { text-decoration: none; }
-  nav .links a:hover { color: var(--ink); }
+/* ---------- nav ---------- */
+.nav{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:50;width:min(760px,100% - 24px);height:56px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 22px;border-radius:999px;border:1px solid var(--line);background:rgba(22,20,24,.45);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);transition:background .3s,border-color .3s,box-shadow .3s}
+.nav.scrolled{background:rgba(14,13,16,.82);border-color:rgba(255,255,255,.1);box-shadow:0 10px 40px rgba(0,0,0,.4)}
+.brand{display:flex;align-items:center;gap:9px;font-weight:600;font-size:16px;letter-spacing:-.01em}
+.brand img{width:22px;height:22px}
+.nav-links{display:flex;gap:26px;font-size:15.5px;font-weight:500;color:#a8a7ad}
+.nav-links a:hover,.nav-dl:hover{color:#fff}
+.nav-dl{justify-self:end;display:flex;align-items:center;gap:7px;font-weight:500;font-size:15.5px;color:#c9c8cd}
+.apple{width:15px;height:15px;fill:currentColor}
 
-  .hero { text-align: center; padding: 72px 0 40px; }
-  .badge { display: inline-flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); border: 1px solid var(--line); border-radius: 99px; padding: 5px 12px; background: var(--card); }
-  .badge i { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); }
-  h1 { font-size: clamp(48px, 8vw, 92px); line-height: 1; margin: 26px 0 22px; }
-  h1 em { background: linear-gradient(100deg, var(--indigo), var(--teal)); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: 0.08em; }
-  .lede { font-size: 20px; color: var(--muted); max-width: 580px; margin: 0 auto; }
+/* ---------- hero ---------- */
+.hero{position:relative;padding:118px 0 0;text-align:center}
+.glow{position:absolute;inset:-120px 0 auto;height:1100px;pointer-events:none;z-index:-1;overflow:hidden}
+.glow i{position:absolute;border-radius:50%;filter:blur(90px);opacity:.55;animation:drift 18s ease-in-out infinite alternate}
+.glow i:nth-child(1){width:520px;height:700px;left:calc(50% - 260px);top:120px;background:radial-gradient(closest-side,#b8770f,transparent);opacity:.5}
+.glow i:nth-child(2){width:520px;height:620px;left:calc(50% - 820px);top:200px;background:radial-gradient(closest-side,#8a2a78,transparent);animation-duration:22s}
+.glow i:nth-child(3){width:560px;height:640px;left:calc(50% + 280px);top:180px;background:radial-gradient(closest-side,#4a2562,transparent);animation-duration:26s}
+.glow i:nth-child(4){width:420px;height:420px;left:calc(50% + 120px);top:520px;background:radial-gradient(closest-side,#7a2346,transparent);opacity:.4}
+@keyframes drift{to{transform:translate(40px,-30px) scale(1.08)}}
+.announce{display:inline-flex;align-items:center;gap:10px;padding:5px 14px 5px 5px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(30,26,30,.5);backdrop-filter:blur(10px);font-size:14px;font-weight:500;color:#d9d8dc;transition:border-color .2s}
+.announce:hover{border-color:rgba(255,255,255,.25)}
+.announce b{background:var(--grad);color:#fff;font-weight:600;padding:4px 12px;border-radius:999px;text-shadow:0 1px 2px rgba(0,0,0,.2)}
+.announce svg{width:14px;height:14px;opacity:.6}
+.app-icon{width:110px;height:110px;margin:46px auto 0;filter:drop-shadow(0 18px 30px rgba(0,0,0,.55)) drop-shadow(0 0 40px rgba(230,79,210,.15))}
+.hero h1{font-size:clamp(40px,5.2vw,54px);font-weight:700;margin-top:52px;line-height:1.08}
+.hero .lede{font-size:clamp(18px,2vw,24px);line-height:1.5;max-width:820px;margin:36px auto 0;color:#f1f0f3;letter-spacing:-.015em}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;height:44px;padding:0 26px;border-radius:999px;background:#fff;color:#0b0b0c;font-weight:600;font-size:16px;letter-spacing:-.01em;transition:transform .15s,box-shadow .2s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 30px rgba(255,255,255,.18)}
+.btn .apple{width:17px;height:17px}
+.hero .btn{margin-top:52px}
+.meta{margin-top:18px;font:500 13px var(--mono);color:#8b8a90;display:flex;justify-content:center;flex-wrap:wrap;gap:6px 10px}
+.meta span+span::before{content:"•";margin-right:10px;color:#56555a}
+.meta button{font:inherit;color:#b3b2b8;text-decoration:underline;text-decoration-color:rgba(255,255,255,.25);text-underline-offset:3px}
+.meta button:hover{color:#fff}
 
-  .install { margin: 40px auto 14px; max-width: 700px; }
-  .cmd { display: flex; align-items: center; gap: 12px; background: var(--ink); color: #f4f2ff; border-radius: 14px; padding: 8px 8px 8px 20px; box-shadow: 0 12px 40px -12px rgba(40, 30, 120, .45); }
-  .cmd code { flex: 1; font: 15px/1.4 "JetBrains Mono", ui-monospace, monospace; text-align: left; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
-  .cmd code::before { content: "$ "; color: #8a86a8; }
-  .cmd button { border: 0; border-radius: 9px; padding: 11px 16px; font: 600 14px Inter, sans-serif; cursor: pointer; background: linear-gradient(100deg, var(--indigo), var(--teal)); color: #fff; white-space: nowrap; }
-  .cmd button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-  .hint { font-size: 14px; color: var(--muted); margin-top: 14px; }
-  .hint a { color: var(--ink); }
+/* scaled mockup wrapper */
+.fit{position:relative;width:100%;aspect-ratio:var(--w)/var(--h)}
+.fit-in{position:absolute;left:0;top:0;width:calc(var(--w)*1px);height:calc(var(--h)*1px);transform:scale(var(--s,1));transform-origin:0 0}
 
-  /* Mac mock */
-  .stage { margin: 56px auto 0; max-width: 940px; aspect-ratio: 16 / 10; border-radius: 18px; overflow: hidden; position: relative; box-shadow: 0 40px 80px -30px rgba(20, 15, 60, .5), 0 0 0 1px rgba(0,0,0,.08);
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 1000'%3E%3Cdefs%3E%3ClinearGradient id='a' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23f7b267'/%3E%3Cstop offset='.5' stop-color='%23f4845f'/%3E%3Cstop offset='1' stop-color='%236a4c93'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1600' height='1000' fill='url(%23a)'/%3E%3Cpath d='M0 700 Q400 560 800 690 T1600 640 V1000 H0Z' fill='%23493267' opacity='.7'/%3E%3Cpath d='M0 820 Q500 700 1000 800 T1600 760 V1000 H0Z' fill='%23261a3c' opacity='.8'/%3E%3C/svg%3E") center / cover; }
-  .menubar { position: absolute; inset: 0 0 auto; height: 26px; background: rgba(255,255,255,.35); backdrop-filter: blur(20px); display: flex; align-items: center; justify-content: space-between; padding: 0 14px; font-size: 12px; font-weight: 500; color: #1c1b22; z-index: 3; }
-  .menubar span { display: flex; gap: 14px; align-items: center; }
-  .window { position: absolute; left: 9%; top: 15%; width: 58%; height: 62%; background: #fbfaf8; border-radius: 10px; box-shadow: 0 20px 50px rgba(0,0,0,.35); padding: 34px 22px 22px; }
-  .window::before { content: ""; position: absolute; top: 12px; left: 14px; width: 52px; height: 12px; background: radial-gradient(circle at 6px 6px, #ff5f57 5px, transparent 6px), radial-gradient(circle at 26px 6px, #febc2e 5px, transparent 6px), radial-gradient(circle at 46px 6px, #28c840 5px, transparent 6px); }
-  .window i { display: block; height: 10px; border-radius: 5px; background: #e8e5de; margin: 12px 0; }
-  .toast { position: absolute; right: 2.2%; top: 7%; z-index: 2; background: rgba(250, 249, 252, .82); backdrop-filter: blur(24px); border-radius: 13px; padding: 12px 14px; font-size: 13px; box-shadow: 0 10px 30px rgba(0,0,0,.25); text-align: left; transition: opacity .5s, transform .5s; }
-  .toast b { display: block; margin-bottom: 8px; }
-  .toast .row { display: flex; gap: 6px; }
-  .toast .row span { font-size: 11px; padding: 3px 9px; border-radius: 6px; background: #e6e4ec; }
-  .toast .row span:first-child { background: var(--indigo); color: #fff; }
-  .overlay { position: absolute; inset: 0; z-index: 4; display: grid; place-content: center; text-align: center; color: #fff; backdrop-filter: blur(28px) saturate(1.3); background: linear-gradient(135deg, rgba(77,69,217,.55), rgba(31,179,173,.35)); opacity: 0; transition: opacity .8s; }
-  .overlay h3 { font: 400 clamp(30px, 5vw, 54px)/1 "Instrument Serif", serif; }
-  .overlay p { opacity: .85; font-size: clamp(13px, 1.6vw, 17px); margin: 10px 0 6px; }
-  .overlay .t { font: 200 clamp(44px, 8vw, 92px)/1.1 Inter, sans-serif; font-variant-numeric: tabular-nums; }
-  .overlay .pills { display: flex; gap: 8px; justify-content: center; margin-top: 14px; }
-  .overlay .pills span { font-size: 12px; background: rgba(255,255,255,.18); padding: 6px 13px; border-radius: 99px; }
-  .stage.breaking .overlay { opacity: 1; }
-  .stage.breaking .toast, .stage.working .toast { opacity: 0; transform: translateY(-8px); }
+/* ---------- hero demo ---------- */
+.demo-wrap{margin-top:120px}
+.demo{border-radius:30px;overflow:hidden;box-shadow:0 40px 120px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06)}
+.desk{position:absolute;inset:0;overflow:hidden;background:url(/assets/wall-blue.jpg) center/cover;font-family:Inter,sans-serif;text-align:left;cursor:default;user-select:none}
+.mbar{position:absolute;inset:0 0 auto;height:34px;display:flex;align-items:center;justify-content:space-between;padding:0 18px 0 22px;color:#fff;font-size:13.5px;font-weight:600;z-index:3}
+.desk .mbar{background:rgba(40,60,110,.22);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);text-shadow:0 1px 2px rgba(0,0,0,.25)}
+.mbar-l,.mbar-r{display:flex;align-items:center;gap:20px}
+.mbar-l .apple{width:17px;height:17px}
+.mbar-l span{font-weight:500;opacity:.95}
+.mbar-l span:first-of-type{font-weight:700}
+.mbar-r svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.mb-pill{display:flex;align-items:center;gap:7px;padding:3px 9px;border-radius:5px;background:rgba(255,255,255,.15);font-variant-numeric:tabular-nums;min-width:62px}
+.mb-pill svg{width:16px;height:16px;fill:#fff;stroke:none}
+.editor{position:absolute;left:230px;top:98px;width:740px;height:486px;border-radius:12px;overflow:hidden;background:rgba(28,30,38,.9);backdrop-filter:blur(30px);box-shadow:0 30px 80px rgba(10,20,60,.45),0 0 0 1px rgba(255,255,255,.1);display:grid;grid-template-columns:190px 1fr;grid-template-rows:38px 1fr 24px;font-size:12.5px;color:#9ea3b0;transition:filter .6s}
+.ed-title{grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:0 14px;border-bottom:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02)}
+.tl{width:12px;height:12px;border-radius:50%;background:#ff5f57}.tl:nth-child(2){background:#febc2e}.tl:nth-child(3){background:#28c840}
+.ed-title p{flex:1;text-align:center;margin-right:52px;color:#8a8f9c;font-size:12.5px}
+.ed-side{padding:12px 0;border-right:1px solid rgba(255,255,255,.06);background:rgba(0,0,0,.12);line-height:26px}
+.ed-side p{padding:0 16px;white-space:nowrap}
+.ed-side .h{font-size:10.5px;font-weight:700;letter-spacing:.06em;color:#6b707c;margin-bottom:2px}
+.ed-side .on{background:rgba(120,150,255,.14);color:#e6e8ee}
+.ed-side .f{padding-left:30px}
+.ed-code{padding:14px 0;font:13px/22px var(--mono);color:#d6d9e0;white-space:pre;overflow:hidden}
+.ed-code i{display:inline-block;font-style:normal;width:48px;text-align:right;padding-right:18px;color:#555b68;flex:none}
+.k{color:#ff7ab2}.t{color:#7fd6ff}.n{color:#e8cf7a}.s{color:#ff8f70}.c{color:#6c7486;font-style:italic}.fn{color:#a8e3a0}
+.caret{display:inline-block;width:2px;height:15px;background:#fff;vertical-align:-2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.ed-status{grid-column:1/-1;display:flex;gap:18px;align-items:center;padding:0 14px;font-size:11px;color:#8a8f9c;border-top:1px solid rgba(255,255,255,.06);background:rgba(0,0,0,.2)}
 
-  section { padding: 110px 0 0; }
-  h2 { font-size: clamp(38px, 5vw, 58px); line-height: 1.05; text-align: center; }
-  .sub { text-align: center; color: var(--muted); max-width: 560px; margin: 16px auto 0; }
-  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 54px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 28px; }
-  .card .ic { width: 42px; height: 42px; border-radius: 11px; display: grid; place-items: center; background: linear-gradient(135deg, rgba(77,69,217,.12), rgba(31,179,173,.14)); color: var(--indigo); margin-bottom: 18px; }
-  .card h4 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
-  .card p { color: var(--muted); font-size: 15px; }
+.heads{position:absolute;left:50%;top:54px;width:380px;margin-left:-190px;padding:14px 14px 13px;border-radius:18px;background:rgba(0,0,0,.55);backdrop-filter:blur(24px) saturate(1.3);-webkit-backdrop-filter:blur(24px) saturate(1.3);border:1px solid rgba(255,255,255,.1);box-shadow:0 18px 50px rgba(0,0,0,.35);color:#fff;z-index:4}
+.heads-top{display:flex;align-items:center;gap:12px}
+.hu-ring{position:relative;width:48px;height:48px;flex:none}
+.hu-ring::before{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--grad)}
+.hu-ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.hu-ring circle{fill:none;stroke:#fff;stroke-width:2.5;stroke-linecap:round;transition:stroke-dashoffset .9s linear}
+.heads b{display:block;font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.heads small{display:block;font-size:13px;color:rgba(255,255,255,.72);margin-top:1px}
+.hu-pills{display:flex;gap:7px;margin-top:12px}
+.hu-pills span{font-size:12px;font-weight:500;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.06)}
+.float{position:absolute;display:flex;align-items:center;gap:9px;padding:6px 14px 6px 6px;border-radius:12px;background:rgba(0,0,0,.55);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.1);font-size:13px;font-weight:600;color:#fff;white-space:nowrap;box-shadow:0 10px 30px rgba(0,0,0,.3);font-variant-numeric:tabular-nums;z-index:5}
+.tile-m{width:22px;height:22px;border-radius:6px;background:var(--grad);display:grid;place-items:center}
+.tile-m svg{width:15px;height:15px}
+.cursor{position:absolute;left:0;top:0;width:22px;height:22px;z-index:6;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))}
+.desk .cursor{transition:transform 1.4s cubic-bezier(.45,0,.2,1)}
+.desk .float{left:0;top:0;transition:transform 1.4s cubic-bezier(.45,0,.2,1),opacity .35s}
 
-  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 54px; counter-reset: s; }
-  .steps .card::before { counter-increment: s; content: counter(s); font: 400 44px/1 "Instrument Serif", serif; color: var(--indigo); display: block; margin-bottom: 12px; }
-  .note { margin: 20px auto 0; max-width: 760px; font-size: 15px; color: var(--muted); text-align: center; }
+.brk{position:absolute;inset:0;z-index:7;color:#fff;text-align:center;opacity:0;transition:opacity .6s ease;pointer-events:none}
+.brk::before{content:"";position:absolute;inset:-100px;background:url(/assets/wall-blue.jpg) center/cover;filter:blur(55px) saturate(1.15)}
+.brk::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.25)}
+.brk>*{position:relative;z-index:1}
+.brk-clock{position:absolute;top:34px;left:0;right:0;display:flex;justify-content:center;align-items:center;gap:6px;font-size:13px;font-weight:600;color:rgba(255,255,255,.7)}
+.brk-clock svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.2}
+.brk-mid{position:absolute;left:0;right:0;top:218px}
+.brk h3{font-size:46px;font-weight:700;letter-spacing:-.02em}
+.brk p{font-size:17px;font-weight:500;color:rgba(255,255,255,.8);margin-top:12px}
+.brk hr{width:60px;height:2px;border:0;background:rgba(255,255,255,.3);margin:30px auto}
+.brk-count{font-size:36px;font-weight:700;color:#A9D8FF;font-variant-numeric:tabular-nums;font-family:ui-rounded,"SF Pro Rounded",Inter,sans-serif;letter-spacing:.01em}
+.brk-bot{position:absolute;left:0;right:0;bottom:56px}
+.brk-pills{display:flex;gap:12px;justify-content:center}
+.glass-pill{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 18px;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);font-size:13.5px;font-weight:600;backdrop-filter:blur(10px)}
+.glass-pill svg{width:14px;height:14px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.skip-ring{width:14px;height:14px;transform:rotate(-90deg)}
+.skip-ring circle{stroke-dasharray:100;stroke-dashoffset:var(--o,100)}
+.brk small{display:block;font-size:11.5px;color:rgba(255,255,255,.6);margin-top:14px;line-height:1.9}
+kbd{display:inline-block;font:600 10px Inter,sans-serif;padding:1px 6px;border-radius:4px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);margin:0 3px;vertical-align:1px}
+.desk[data-p="work"] .heads,.desk[data-p="count"] .heads,.desk[data-p="break"] .heads{opacity:0;transform:translateY(-16px) scale(.97)}
+.desk .heads{transition:opacity .45s,transform .5s cubic-bezier(.2,.9,.3,1.2)}
+.desk:not([data-p="count"]) .float{opacity:0}
+.desk[data-p="break"] .brk{opacity:1}
+.desk[data-p="break"] .editor{filter:blur(6px)}
 
-  .faq { max-width: 720px; margin: 48px auto 0; }
-  details { border-bottom: 1px solid var(--line); padding: 20px 0; }
-  summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
-  summary::after { content: "+"; color: var(--muted); font-weight: 400; font-size: 22px; line-height: 1; }
-  details[open] summary::after { content: "–"; }
-  details p { color: var(--muted); margin-top: 10px; font-size: 16px; }
-  details code { font: 13.5px "JetBrains Mono", monospace; background: #ebe8e1; padding: 2px 6px; border-radius: 5px; word-break: break-all; }
+/* ---------- benefits + honest carousel ---------- */
+.band{padding:110px 0 70px;background:linear-gradient(#0a0a0b,#121113 18%,#121113 58%,#0a0a0b 58.2%)}
+.benefits{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;text-align:center}
+.tile-dark{width:56px;height:56px;margin:0 auto;border-radius:14px;display:grid;place-items:center;background:linear-gradient(180deg,#3a2f36,#2a2328);border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 6px 18px rgba(0,0,0,.35);color:#d8c9d3}
+.tile-dark .ic{width:26px;height:26px}
+.benefits p{margin-top:28px;font-size:21px;font-weight:600;letter-spacing:-.02em;line-height:1.45}
+.carousel{position:relative;margin:100px auto 0;max-width:1060px;display:flex;align-items:center;justify-content:center}
+.stack{position:relative;width:min(700px,100%);height:360px}
+.stack::before,.stack::after{content:"";position:absolute;inset:0;border-radius:24px;background:#18161a;border:1px solid rgba(255,255,255,.06)}
+.stack::before{transform:rotate(-2.2deg) translate(-8px,-10px)}
+.stack::after{transform:rotate(1.8deg) translate(8px,14px)}
+.hcard{position:absolute;inset:0;z-index:2;border-radius:24px;padding:44px 60px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:linear-gradient(160deg,#262226,#1b191c 60%);border:1px solid rgba(255,255,255,.09);box-shadow:0 30px 60px rgba(0,0,0,.45);opacity:0;visibility:hidden;transform:translateX(24px) rotate(.6deg);transition:opacity .45s,transform .45s,visibility .45s}
+.hcard.on{opacity:1;visibility:visible;transform:none}
+.hcard.out{transform:translateX(-24px) rotate(-.6deg)}
+.hcard .badge{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:var(--grad);box-shadow:0 8px 24px rgba(230,79,210,.3);color:#fff}
+.hcard .badge .ic{width:28px;height:28px;stroke-width:2}
+.hcard h3{font-size:30px;font-weight:700;margin-top:26px}
+.hcard p{font-size:19px;font-weight:500;line-height:1.55;color:#e9e8ec;margin-top:12px;max-width:520px;letter-spacing:-.01em}
+.hcard .tag{margin-top:22px;font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#8e8d93}
+.arrow{position:absolute;top:50%;margin-top:-24px;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(180deg,#2c282d,#1d1b1f);border:1px solid rgba(255,255,255,.12);box-shadow:0 6px 18px rgba(0,0,0,.4);color:#cfcdd3;transition:color .2s,transform .15s;z-index:3}
+.arrow:hover{color:#fff;transform:scale(1.05)}
+.arrow.l{left:0}.arrow.r{right:0}
+.arrow .ic{width:22px;height:22px}
+.dots{display:flex;gap:8px;justify-content:center;margin-top:40px}
+.dots button{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.2);transition:background .2s,width .2s}
+.dots button[aria-current="true"]{background:#fff;width:20px;border-radius:4px}
 
-  .cta { text-align: center; padding: 120px 0 90px; }
-  .cta .install { margin-top: 30px; }
-  footer { border-top: 1px solid var(--line); padding: 30px 0 44px; font-size: 14px; color: var(--muted); display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+/* ---------- section headers with glowing tile ---------- */
+.sec{padding:130px 0 0}
+.sec-icon{position:relative;width:112px;height:112px;margin:0 auto;border-radius:34px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02)}
+.sec-icon::before{content:"";position:absolute;inset:-260px;z-index:-1;background:radial-gradient(closest-side,rgba(230,79,210,.16),rgba(247,165,70,.08) 45%,transparent);pointer-events:none}
+.sec-icon::after{content:"";position:absolute;inset:10px;border-radius:26px;border:1px solid rgba(255,255,255,.06)}
+.sec-icon span{width:78px;height:78px;border-radius:22px;background:linear-gradient(145deg,#E64FD2 20%,#F7A546 120%);display:grid;place-items:center;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 10px 30px rgba(230,79,210,.35)}
+.sec-icon .ic{width:38px;height:38px;stroke-width:2.2}
+.sec h2{margin-top:44px}
 
-  @media (max-width: 800px) {
-    .grid, .steps { grid-template-columns: 1fr; }
-    nav .links a:not(:last-child) { display: none; }
-    .toast { display: none; }
-    .window { width: 80%; }
-  }
-  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* flow */
+.flow{margin-top:100px}
+.flow-card{margin-top:290px;background:linear-gradient(180deg,#221c21,#1c181c);border:1px solid rgba(255,255,255,.06);border-radius:28px;padding:0 40px 56px}
+.flow-mock{margin-top:-290px;border-radius:24px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.08)}
+.fdesk{position:absolute;inset:0;background:url(/assets/wall-purple.jpg) center 70%/cover}
+.fdesk .mbar{background:rgba(22,18,48,.7);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);height:42px}
+.fdesk .mb-pill{background:rgba(255,255,255,.18)}
+.fdesk .heads{top:74px}
+.fdesk .float{left:auto;right:36px;top:auto;bottom:34px}
+.fdesk .cursor{left:auto;right:280px;top:auto;bottom:62px;transform:none}
+.features3{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;margin-top:64px;text-align:center}
+.features3 h3{font-size:22px;font-weight:600;letter-spacing:-.02em;margin-top:34px}
+.features3 p{color:var(--muted);font-size:17px;line-height:1.5;margin:14px auto 0;max-width:300px}
+
+/* pauses */
+.pauses{padding:120px 0 0;text-align:center}
+.caption{font:500 13.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#8c8b91}
+.chips{display:flex;flex-wrap:wrap;justify-content:center;gap:16px;margin:32px auto 0;max-width:980px}
+.chip{display:flex;align-items:center;gap:12px;height:60px;min-width:220px;padding:0 20px 0 14px;border-radius:14px;background:var(--card);border:1px solid rgba(255,255,255,.1);font-size:17px;font-weight:500;letter-spacing:-.01em;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.chip span{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
+.chip .ic{width:18px;height:18px;stroke-width:2.2}
+.g1{background:linear-gradient(135deg,#E64FD2,#d44a8c)}.g2{background:linear-gradient(135deg,#c6509a,#e0845c)}.g3{background:linear-gradient(135deg,#e07a4a,#F7A546)}.g4{background:linear-gradient(135deg,#9a5be0,#E64FD2)}
+
+/* nudges */
+.nudges{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:84px}
+.ncard{position:relative;aspect-ratio:584/380;border-radius:24px;overflow:hidden;background:center/cover;box-shadow:0 0 0 1px rgba(255,255,255,.08)}
+.ncard.a{background-image:url(/assets/wall-orange.jpg)}
+.ncard.b{background-image:url(/assets/wall-night.jpg)}
+.ncard .label{position:absolute;left:18px;bottom:16px;font:500 11.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:6px 10px;border-radius:8px;background:rgba(0,0,0,.35);backdrop-filter:blur(10px);color:rgba(255,255,255,.85)}
+.nudge{position:absolute;left:50%;top:50%;width:64px;height:64px;margin:-32px 0 0 -32px}
+.nudge .track{position:absolute;left:-6px;right:-6px;bottom:-6px;height:76px;border-radius:38px;background:rgba(40,6,20,.45);backdrop-filter:blur(8px);animation:track 4.2s ease-in-out infinite}
+.nudge .ball{position:absolute;left:0;top:0;width:64px;height:64px;border-radius:50%;background:linear-gradient(145deg,#E64FD2 30%,#F7A546 130%);display:grid;place-items:center;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.posture .ball{animation:pball 4.2s ease-in-out infinite}
+.posture .ball svg{width:28px;height:28px;fill:none;stroke:#3a0d2c;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
+.posture .shaft{animation:shaft 4.2s ease-in-out infinite}
+@keyframes pball{0%{transform:scale(.6);opacity:0}10%{transform:scale(1);opacity:1}25%{transform:none}50%,62%{transform:translateY(-84px)}78%{transform:none;opacity:1}90%,100%{transform:scale(.5);opacity:0}}
+@keyframes track{0%{transform:scale(.6);opacity:0}10%,25%{transform:scale(1);opacity:1;height:76px}50%,62%{height:160px}78%{height:76px;opacity:1}90%,100%{transform:scale(.5);opacity:0;height:76px}}
+@keyframes shaft{0%,22%{opacity:0}35%,85%{opacity:1}100%{opacity:0}}
+.blink .track{height:76px;animation:btrack 4.2s ease-in-out infinite}
+.blink .ball{animation:bball 4.2s ease-in-out infinite}
+.blink .ball svg{position:absolute;width:40px;height:40px;fill:none;stroke:#3a0d2c;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round}
+.blink .squint{animation:squint 4.2s infinite}
+.blink .happy{animation:happy 4.2s infinite}
+@keyframes bball{0%{transform:scale(.6);opacity:0}10%{transform:scale(1);opacity:1}28%{transform:scale(.93)}36%{transform:scale(1.04)}44%,76%{transform:scale(1);opacity:1}90%,100%{transform:scale(.5);opacity:0}}
+@keyframes btrack{0%{transform:scale(.6);opacity:0}10%,76%{transform:scale(1);opacity:1}90%,100%{transform:scale(.5);opacity:0}}
+@keyframes squint{0%,38%{opacity:1}42%,100%{opacity:0}}
+@keyframes happy{0%,38%{opacity:0}42%,100%{opacity:1}}
+
+/* settings window */
+.mock-center{margin:84px auto 0;max-width:860px}
+.sw{position:absolute;inset:0;display:flex;gap:8px;padding:8px;border-radius:18px;background:#1f2027;border:1px solid rgba(255,255,255,.14);box-shadow:0 40px 100px rgba(0,0,0,.6);font-size:13px;color:#e8e8ec;text-align:left}
+.sw-side{width:220px;flex:none;border-radius:12px;background:#23242c;border:1px solid rgba(255,255,255,.07);padding:14px 10px}
+.sw-tls{display:flex;gap:8px;padding:2px 6px 14px}
+.sw-tls i{width:12px;height:12px;border-radius:50%;background:#4a4b53}.sw-tls i:first-child{background:#ff5f57}
+.sw-h{font-size:11.5px;font-weight:600;color:#8e8f98;margin:16px 8px 5px}
+.sw-row{display:flex;align-items:center;gap:10px;height:34px;padding:0 8px;border-radius:8px}
+.sw-row.on{background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}
+.st{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;flex:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
+.st svg{width:14px;height:14px;fill:none;stroke:#fff;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round}
+.st .fill{fill:#fff;stroke:none}
+.t-violet{background:linear-gradient(135deg,#9b5cf0,#E64FD2)}.t-pink{background:linear-gradient(135deg,#E64FD2,#f06aa8)}.t-rose{background:linear-gradient(135deg,#ef5a9a,#f0707a)}.t-red{background:linear-gradient(135deg,#ef4f5f,#f58a4a)}.t-orange{background:linear-gradient(135deg,#f07a3c,#F7A546)}.t-yellow{background:linear-gradient(135deg,#e8a52c,#f2c94c)}
+.sw-main{flex:1;display:flex;flex-direction:column;min-width:0}
+.sw-top{display:flex;align-items:center;gap:10px;height:52px;padding:0 16px;border-bottom:1px solid rgba(255,255,255,.08);font-size:17px;font-weight:700;letter-spacing:-.01em}
+.sw-top .st{width:26px;height:26px;border-radius:7px}
+.sw-body{padding:4px 16px 16px}
+.sw-lbl{font-size:13px;font-weight:700;margin:18px 2px 9px}
+.grp{background:#292a33;border-radius:12px;padding:0 12px}
+.gr{display:flex;align-items:center;justify-content:space-between;gap:12px;height:44px}
+.gr+.gr{border-top:1px solid rgba(255,255,255,.07)}
+.val{display:flex;align-items:center;gap:8px;color:#e8e8ec}
+.val.dim{color:#9c9da6}
+.step{width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.1);display:grid;place-items:center}
+.step svg{width:10px;height:10px;fill:none;stroke:#ddd;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.chev{width:12px;height:12px;fill:none;stroke:#7d7e88;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.tog{width:38px;height:22px;border-radius:11px;background:rgba(255,255,255,.16);position:relative;flex:none}
+.tog::after{content:"";position:absolute;left:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#e9e9ee;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.tog.on{background:var(--blue)}.tog.on::after{left:18px;background:#fff}
+.enf{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:12px 0 12px;border-bottom:1px solid rgba(255,255,255,.07);text-align:center}
+.thumb{height:86px;border-radius:9px;position:relative;overflow:hidden;background:linear-gradient(135deg,#6a4b9a,#b8475f 55%,#d67a3e);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+.thumb span{position:absolute;left:30%;top:50%;margin-top:-17px;height:34px;padding:0 16px 0 14px;border-radius:999px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;white-space:nowrap;color:#fff}
+.thumb span svg{width:17px;height:17px;fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.enf .sel .thumb{outline:3px solid var(--blue);outline-offset:3px}
+.enf b{display:block;font-size:12.5px;font-weight:500;margin-top:11px}
+.enf .sel b{font-weight:700}
+.enf small{display:block;font-size:12px;color:#8e8f98;margin-top:1px}
+.hardcore .thumb span{opacity:.55}
+
+/* stats panels */
+.stats-wrap{margin:40px auto 0;max-width:860px}
+.stats-card{position:absolute;inset:0;border-radius:24px;overflow:hidden;background:url(/assets/wall-blue.jpg) center/cover;box-shadow:0 30px 80px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.08);display:flex;justify-content:center;align-items:center;gap:40px;text-align:left}
+.stats-card::before{content:"";position:absolute;inset:0;background:linear-gradient(160deg,rgba(20,20,60,.55),rgba(10,12,40,.25))}
+.panel{position:relative;width:300px;border-radius:14px;padding:12px 14px 12px;background:rgba(28,28,44,.72);backdrop-filter:blur(30px) saturate(1.5);-webkit-backdrop-filter:blur(30px) saturate(1.5);border:1px solid rgba(255,255,255,.14);box-shadow:0 24px 60px rgba(0,0,0,.45);color:#fff;font-size:12.5px}
+.p-head{display:flex;justify-content:center;position:relative;height:28px;align-items:center}
+.seg{display:flex;padding:2px;border-radius:8px;background:rgba(255,255,255,.08);font-size:12px;font-weight:600}
+.seg span{padding:4px 14px;border-radius:6px;color:rgba(255,255,255,.7)}
+.seg .on{background:rgba(255,255,255,.18);color:#fff}
+.gear{position:absolute;right:0;top:5px;width:18px;height:18px;fill:none;stroke:rgba(255,255,255,.75);stroke-width:2;stroke-linecap:round}
+.ring{position:relative;width:140px;height:140px;margin:18px auto 0}
+.ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.ring-txt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-txt b{font-size:28px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.ring-txt small{font-size:10.5px;color:rgba(255,255,255,.6);margin-top:1px}
+.p-status{text-align:center;color:rgba(255,255,255,.6);margin-top:14px;font-size:12px}
+.p-cta{display:flex;align-items:center;justify-content:center;height:34px;border-radius:999px;background:var(--grad);font-weight:600;font-size:13px;margin-top:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
+.p-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.p-row span{height:30px;border-radius:999px;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;gap:5px;font-weight:500}
+.p-row svg{width:9px;height:9px;fill:none;stroke:#fff;stroke-width:2.5;opacity:.7}
+.p-foot{display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,.5);margin-top:14px;padding:0 2px}
+.score-t{text-align:center;font-weight:600;font-size:13px;margin-top:14px}
+.gauge{position:relative;width:180px;height:104px;margin:12px auto 0}
+.gauge b{position:absolute;left:0;right:0;bottom:2px;text-align:center;font-size:40px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.gauge-cap{text-align:center;color:rgba(255,255,255,.62);font-size:12px;margin-top:6px}
+.pc{background:rgba(255,255,255,.06);border-radius:12px;padding:10px 12px 8px;margin-top:10px}
+.pc h4{font-size:12px;font-weight:600;color:rgba(255,255,255,.9);margin-bottom:4px;letter-spacing:0}
+.pr{display:flex;align-items:center;gap:8px;height:24px}
+.pr i{width:8px;height:8px;border-radius:50%;background:var(--pink);flex:none}
+.pr i.o{background:var(--orange)}.pr i.p{background:#b38cff}
+.pr span{flex:1;color:rgba(255,255,255,.85)}
+.pr em{font-style:normal;font-variant-numeric:tabular-nums;color:rgba(255,255,255,.85);min-width:34px;text-align:right}
+.pr em+em{color:rgba(255,255,255,.55);min-width:46px}
+.mock-cap{text-align:center;color:var(--dim);font-size:14px;margin-top:22px}
+
+/* customisation */
+.custom{margin-top:130px;padding:110px 0 100px;background:#141315;border-top:1px solid rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.04)}
+.custom h2{font-size:clamp(26px,2.6vw,32px);line-height:1.3;font-weight:600;letter-spacing:-.02em}
+.cstage{margin:70px auto 0;max-width:1200px}
+.cc{position:absolute;border-radius:12px;background:#2a282c;border:1px solid rgba(255,255,255,.1);box-shadow:0 20px 50px rgba(0,0,0,.45);font-size:13px;color:#ebeaee;text-align:left}
+.cc .gr{height:38px;padding:0 14px}
+.cc .gr+.gr{border-top-color:rgba(255,255,255,.08)}
+.play{width:18px;height:18px;border-radius:50%;border:1.5px solid rgba(255,255,255,.55);display:grid;place-items:center}
+.play::after{content:"";border-left:6px solid rgba(255,255,255,.8);border-top:4px solid transparent;border-bottom:4px solid transparent;margin-left:2px}
+.tr{display:flex;align-items:center;gap:8px}
+.slider{width:150px;height:4px;border-radius:2px;background:rgba(255,255,255,.18);position:relative}
+.slider::before{content:"";position:absolute;left:0;top:0;bottom:0;width:62%;border-radius:2px;background:var(--blue)}
+.slider::after{content:"";position:absolute;left:62%;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#eee;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.spk{width:14px;height:14px;fill:none;stroke:#aaa;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.bgpick{display:flex;gap:10px;padding:12px}
+.bgpick>div{text-align:center;font-size:11.5px;color:#cfcdd3}
+.bgt{width:102px;height:62px;border-radius:8px;margin-bottom:7px;position:relative;overflow:hidden}
+.bgt.blur{background:url(/assets/wall-orange.jpg) center/cover}
+.bgt.blur::after{content:"";position:absolute;inset:-20px;background:inherit;filter:blur(8px)}
+.bgt.grad{background:linear-gradient(135deg,#E64FD2,#9b5cf0 45%,#F7A546)}
+.bgt.cust{border:1.5px dashed rgba(255,255,255,.3);display:grid;place-items:center;color:#aaa;font-size:10px;font-weight:600}
+.bgt.cust svg{width:20px;height:20px;margin:0 auto 2px;fill:none;stroke:#bbb;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.bgpick .sel .bgt{outline:3px solid var(--blue);outline-offset:2px}
+.bgpick .sel{color:#fff;font-weight:600}
+.msgs{padding:12px 14px 12px}
+.msg-box{border:1px solid rgba(255,255,255,.1);border-radius:8px;overflow:hidden}
+.msg-box .gr{height:34px;padding:0 12px}
+.msg-box .gr:first-child{background:rgba(255,255,255,.03)}
+.msg-box .gr.hl{background:rgba(10,132,255,.25)}
+.msg-foot{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:11.5px;color:#8f8e94}
+.msg-foot b{width:24px;height:22px;border-radius:6px;background:rgba(255,255,255,.1);display:grid;place-items:center;font-weight:400;font-size:15px;color:#ddd}
+.msg-foot span{margin-left:auto}
+.note{position:absolute;font:500 12.5px/1.55 var(--mono);letter-spacing:.02em;text-transform:uppercase;color:#96959b}
+.hand{position:absolute;fill:none;stroke:rgba(255,255,255,.4);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+
+/* mac card */
+.maccard{position:relative;margin-top:130px;border-radius:28px;overflow:hidden;background:url(/assets/wall-night.jpg) center/cover;box-shadow:0 0 0 1px rgba(255,255,255,.08);text-align:center;padding:0 24px 80px}
+.maccard::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,8,20,.2),rgba(10,8,20,.55))}
+.maccard>*{position:relative}
+.maccard .mbar{position:relative;margin:0 -24px;height:42px;background:rgba(20,14,34,.35);border-bottom:1px solid rgba(255,255,255,.07);backdrop-filter:blur(10px)}
+.icons-row{display:flex;justify-content:center;align-items:center;gap:16px;margin-top:84px}
+.gl{width:56px;height:56px;border-radius:15px;display:grid;place-items:center;background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.08));border:1px solid rgba(255,255,255,.22);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 10px 24px rgba(0,0,0,.3);color:#fff;font-size:28px;font-weight:500}
+.gl svg{width:28px;height:28px;fill:#fff}
+.gl.big{width:96px;height:96px;border-radius:26px;padding:6px;background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.1))}
+.gl.big img{width:84px;height:84px;border-radius:20px}
+.maccard .caption{margin-top:48px;color:#e6e4ea;font-size:16px}
+.maccard .big-serif{font:400 clamp(56px,7vw,76px)/1 var(--serif);letter-spacing:-.01em;margin-top:10px}
+.maccard p{max-width:800px;margin:44px auto 0;font-size:clamp(17px,1.6vw,20px);line-height:1.55;color:#cfcbd6}
+.maccard .btn{margin-top:48px}
+
+/* install */
+.install{padding:150px 0 0}
+.inst{max-width:820px;margin:56px auto 0;border-radius:24px;background:var(--card);border:1px solid rgba(255,255,255,.09);padding:10px 10px 34px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.tabs{display:flex;gap:4px;padding:4px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)}
+.tabs button{flex:1;height:42px;border-radius:12px;font-size:15px;font-weight:500;color:#a4a3a9;transition:background .2s,color .2s}
+.tabs button:hover{color:#fff}
+.tabs button[aria-selected="true"]{background:rgba(255,255,255,.1);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.tabs small{font-size:12px;color:#8a898f;margin-left:4px}
+.tp{padding:30px 28px 0}
+.cmd{display:flex;align-items:center;gap:12px;background:#0d0c0e;border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:8px 8px 8px 18px}
+.cmd code{flex:1;min-width:0;font:500 14.5px/1.5 var(--mono);color:#f2f0f5;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+.cmd code::before{content:"$ ";color:#6d6c72}
+.copy{flex:none;height:38px;padding:0 16px;border-radius:10px;background:#fff;color:#0b0b0c;font-weight:600;font-size:14px;transition:opacity .2s}
+.copy:hover{opacity:.9}
+.tp .steps{list-style:none;margin:22px 0 0;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px;counter-reset:s}
+.steps li{counter-increment:s;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:18px;font-size:14.5px;color:#c8c7cc;line-height:1.5}
+.steps li::before{content:counter(s);display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--grad);color:#fff;font-weight:700;font-size:13px;margin-bottom:12px}
+.steps b{color:#fff;font-weight:600}
+.keycap{display:inline-block;font:600 12px Inter,sans-serif;padding:1px 7px;border-radius:5px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#fff}
+.why{margin-top:22px;font-size:14.5px;line-height:1.6;color:#9f9ea4}
+.why a,.tp a,.faq a{color:#fff;text-decoration:underline;text-decoration-color:rgba(255,255,255,.3);text-underline-offset:3px}
+.why a:hover,.tp a:hover,.faq a:hover{text-decoration-color:#fff}
+.tp p{color:#c8c7cc;font-size:15px;line-height:1.6}
+.tp ol{margin:16px 0 0 20px;color:#c8c7cc;font-size:15px;line-height:1.8}
+.dl-zip{display:inline-flex;align-items:center;gap:10px;height:44px;padding:0 20px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);font-weight:600;margin-bottom:18px;text-decoration:none!important}
+.dl-zip:hover{background:rgba(255,255,255,.12)}
+.dl-zip svg{width:18px;height:18px}
+
+/* faq */
+.faq{padding:150px 0 0}
+.faq-list{max-width:780px;margin:56px auto 0;display:grid;gap:10px}
+details{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:16px;transition:border-color .2s}
+details[open]{border-color:rgba(255,255,255,.14)}
+summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 22px;font-size:17px;font-weight:600;letter-spacing:-.01em}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"";width:10px;height:10px;flex:none;border-right:2px solid #8f8e94;border-bottom:2px solid #8f8e94;transform:rotate(45deg) translate(-3px,-3px);transition:transform .2s}
+details[open] summary::after{transform:rotate(-135deg)}
+details p{padding:0 22px 22px;color:#aeadb3;font-size:15.5px;line-height:1.65}
+details code{font:13.5px var(--mono);background:rgba(255,255,255,.07);padding:2px 6px;border-radius:5px;word-break:break-all;color:#e8e7eb}
+
+/* footer */
+footer{margin-top:170px;background:#000;padding:64px 0 0;overflow:hidden}
+.foot{display:grid;grid-template-columns:1.4fr repeat(3,1fr);gap:40px}
+.foot-brand img{width:34px;height:34px}
+.foot-brand p{color:#8b8a90;font-size:14.5px;line-height:1.5;margin-top:16px;font-weight:500}
+.foot-brand p a:hover{color:#fff}
+.foot-gh{display:inline-block;margin-top:16px;color:#8b8a90}
+.foot-gh:hover{color:#fff}
+.foot-gh svg{width:20px;height:20px;fill:currentColor}
+.foot h4{font-size:14.5px;font-weight:500;color:#6f6e74;letter-spacing:0;margin-bottom:12px}
+.foot ul{list-style:none;display:grid;gap:9px;font-size:14.5px;color:#c9c8cd}
+.foot ul a:hover{color:#fff}
+.word{margin-top:120px;text-align:center;font-weight:800;font-size:min(10vw,146px);line-height:.8;letter-spacing:-.04em;white-space:nowrap;background:linear-gradient(180deg,#1f1f22 10%,rgba(20,20,22,0) 85%);-webkit-background-clip:text;background-clip:text;color:transparent;user-select:none;padding-bottom:20px}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:28px;z-index:60;transform:translate(-50%,20px);opacity:0;pointer-events:none;display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:999px;background:rgba(30,28,32,.92);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(16px);font-size:14.5px;font-weight:500;box-shadow:0 20px 50px rgba(0,0,0,.5);transition:opacity .3s,transform .3s}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast i{width:8px;height:8px;border-radius:50%;background:#34c759}
+
+/* reveal */
+.js .rv{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s cubic-bezier(.2,.7,.2,1)}
+.js .rv.in{opacity:1;transform:none}
+
+/* ---------- responsive ---------- */
+@media (max-width:1024px){
+  .nav-links{gap:18px}
+  .flow-card{padding:0 24px 44px}
+  .foot{grid-template-columns:1fr 1fr 1fr;row-gap:40px}
+  .foot-brand{grid-column:1/-1}
+}
+@media (max-width:768px){
+  .nav{grid-template-columns:1fr auto;padding:0 18px}
+  .nav-links{display:none}
+  .benefits,.features3{grid-template-columns:1fr;gap:44px}
+  .carousel{margin-top:80px}
+  .arrow{top:auto;bottom:-70px;margin:0}
+  .arrow.l{left:calc(50% - 60px)}.arrow.r{right:calc(50% - 60px)}
+  .dots{margin-top:100px}
+  .stack{height:390px}
+  .hcard{padding:36px 28px}
+  .hcard h3{font-size:25px}.hcard p{font-size:17px}
+  .band{background:#0f0e10}
+  .nudges{grid-template-columns:1fr;gap:20px}
+  .flow-card{margin-top:120px;padding:0 20px 40px;border-radius:22px}
+  .flow-mock{margin-top:-120px;border-radius:14px}
+  .demo{border-radius:16px}
+  .chip{min-width:0;flex:1 1 calc(50% - 16px);font-size:14.5px;height:56px;padding:0 10px;gap:10px}
+  .chips{gap:10px}
+  /* customisation: stack instead of scaling */
+  .cstage.fit{aspect-ratio:auto}
+  .cstage .fit-in{position:static;width:auto;height:auto;transform:none;display:flex;flex-direction:column;align-items:center;gap:14px}
+  .cc{position:static;width:100%!important;max-width:480px}
+  .note{position:static;width:auto!important;max-width:480px;text-align:center;margin-bottom:22px}
+  .hand{display:none}
+  .bgpick{justify-content:center}
+  .bgt{width:88px}
+  .tp .steps{grid-template-columns:1fr}
+  .tabs small{display:none}
+  .tp{padding:24px 12px 0}
+  .inst{padding:8px 8px 26px}
+  .cmd{flex-direction:column;align-items:stretch;padding:12px}
+  .cmd code{white-space:normal;word-break:break-all;font-size:13.5px}
+  .foot{grid-template-columns:1fr 1fr}
+  .icons-row{gap:10px}
+  .gl{width:44px;height:44px;border-radius:12px;font-size:22px}.gl svg{width:22px;height:22px}
+  .gl.big{width:76px;height:76px;border-radius:21px}.gl.big img{width:64px;height:64px;border-radius:16px}
+  .maccard .mbar .mbar-r svg:not(:last-child){display:none}
+  .sec{padding-top:110px}
+  .install,.faq{padding-top:120px}
+}
+@media (max-width:480px){
+  .hero{padding-top:104px}
+  .announce{font-size:13px}
+  .demo-wrap{margin-top:72px}
+  .icons-row .gl:nth-child(1),.icons-row .gl:nth-child(5){display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .js .rv{opacity:1;transform:none}
+  .posture .ball{transform:translateY(-84px)}.posture .track{height:160px}
+  .blink .squint{opacity:0}
+}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <nav>
-    <a class="brand" href="/"><img src="/icon.png" alt="">OpenLookAway</a>
-    <div class="links">
-      <a href="#features">Features</a>
-      <a href="#install">Install</a>
-      <a href="#faq">FAQ</a>
-      <a href="https://github.com/yoelgal/openlookaway">GitHub ↗</a>
-    </div>
-  </nav>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E64FD2"/><stop offset="1" stop-color="#F7A546"/></linearGradient>
+    <mask id="mono-m"><rect width="64" height="64" fill="#fff"/><path d="M18 31a5.5 5.5 0 0 1 11 0M35 31a5.5 5.5 0 0 1 11 0" fill="none" stroke="#000" stroke-width="4.4" stroke-linecap="round"/></mask>
+    <symbol id="mono" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" mask="url(#mono-m)"/></symbol>
+    <symbol id="eyes" viewBox="0 0 64 64"><path d="M14 35a7 7 0 0 1 14 0M36 35a7 7 0 0 1 14 0" fill="none" stroke="#4a1238" stroke-width="6" stroke-linecap="round"/></symbol>
+    <symbol id="apple" viewBox="0 0 24 24"><path d="M16.4 12.7c0-2.4 2-3.5 2.1-3.6-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.8 0-1.9-.9-3.2-.8-1.6 0-3.1 1-4 2.4-1.7 3-.4 7.3 1.2 9.7.8 1.2 1.7 2.5 3 2.4 1.2 0 1.7-.8 3.1-.8 1.5 0 1.9.8 3.2.8 1.3 0 2.2-1.2 3-2.4.9-1.4 1.3-2.7 1.3-2.8-.1 0-2.5-1-2.5-3.9zM14 5.6c.7-.8 1.1-1.9 1-3.1-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.6 2.9-1.4z"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/></symbol>
+    <symbol id="i-repeat" viewBox="0 0 24 24"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></symbol>
+    <symbol id="i-bar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M7 13h6"/></symbol>
+    <symbol id="i-cursor" viewBox="0 0 24 24"><path d="M5 3l13 7.5-5.5 1.5L10 18z"/><path d="M15 16l3 3M18 14l2 1M13 19l1 2"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v4"/></symbol>
+    <symbol id="i-video" viewBox="0 0 24 24"><rect x="2.5" y="6" width="13" height="12" rx="2.5"/><path d="M15.5 10.5l6-3.5v10l-6-3.5"/></symbol>
+    <symbol id="i-full" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+    <symbol id="i-cup" viewBox="0 0 24 24"><path d="M4 9h12v4a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M16 10.5h1.5a2.5 2.5 0 0 1 0 5H16"/><path d="M8 3v3M12 3v3"/></symbol>
+    <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 19C5 10 11 5 20 4c0 9-5 15-14 15"/><path d="M5 19l8-8"/></symbol>
+    <symbol id="i-person" viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="2.2"/><path d="M5 9.5c2.5 1 4.5 1.3 7 1.3s4.5-.3 7-1.3M12 10.8V15M12 15l-3.5 6M12 15l3.5 6"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></symbol>
+    <symbol id="i-gift" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v8h14v-8M12 8v12M12 8S10.5 3.5 8 4.5 9 8 12 8zM12 8s1.5-4.5 4-3.5S15 8 12 8z"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></symbol>
+    <symbol id="i-feather" viewBox="0 0 24 24"><path d="M20 4c-6 0-12 4-13 13l-3 3M7 17h7M9 13h7c2-2 4-5 4-9"/></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.6" stroke-width="3.4" stroke-dasharray="3.2 2.77" stroke-linecap="butt"/><circle cx="12" cy="12" r="5.6"/><circle cx="12" cy="12" r="2.2"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path class="fill" d="M12 21s-8.5-5.2-8.5-11.2A4.6 4.6 0 0 1 12 7.2a4.6 4.6 0 0 1 8.5 2.6C20.5 15.8 12 21 12 21z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect class="fill" x="6" y="4.5" width="4" height="15" rx="1.2"/><rect class="fill" x="14" y="4.5" width="4" height="15" rx="1.2"/></symbol>
+    <symbol id="i-speaker" viewBox="0 0 24 24"><path d="M4 9.5h3.5L13 5v14l-5.5-4.5H4z"/><path d="M16.5 9a4.2 4.2 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"/></symbol>
+    <symbol id="i-brush" viewBox="0 0 24 24"><path d="M19.5 3.5l-9 9 1 1 9-9z"/><path d="M9.5 13.5c-2 0-3.5 1.4-3.5 3.3 0 1.2-.8 2.2-2.5 2.7 4 1.5 8 .5 8-3.5"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><path d="M12 11v6"/><circle class="fill" cx="12" cy="7.3" r="1.5"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2.2"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/></symbol>
+    <symbol id="i-skip" viewBox="0 0 24 24"><path d="M5 6l6 6-6 6M12 6l6 6-6 6"/></symbol>
+    <symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M6 18L18 6"/></symbol>
+    <symbol id="i-updown" viewBox="0 0 24 24"><path d="M7 9l5-5 5 5M7 15l5 5 5-5"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="M5 9l7 7 7-7"/></symbol>
+    <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M2.5 9a14 14 0 0 1 19 0M6 12.6a9 9 0 0 1 12 0M9.4 16.1a4.2 4.2 0 0 1 5.2 0"/><circle cx="12" cy="19.4" r=".9"/></symbol>
+    <symbol id="i-vol" viewBox="0 0 24 24"><path d="M3.5 9.5h3.5L12 5v14l-5-4.5H3.5z"/><path d="M15.5 9.5a3.5 3.5 0 0 1 0 5M18 7a7 7 0 0 1 0 10"/></symbol>
+    <symbol id="i-cc" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="3.5"/><rect x="3" y="13" width="18" height="7" rx="3.5"/><circle cx="16.5" cy="7.5" r="1.4"/><circle cx="7.5" cy="16.5" r="1.4"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="5" width="15" height="13" rx="2"/><path d="M3 15l4-4 4 4 2-2 5 5"/><path d="M19 3v6M16 6h6"/></symbol>
+    <symbol id="i-dl" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
+    <symbol id="i-cursorarrow" viewBox="0 0 24 24"><path d="M4 2.5v17l4.6-4.2 3 6.4 3-1.4-3-6.2 6.4-.4z" fill="#000" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></symbol>
+    <symbol id="i-gh" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></symbol>
+    <symbol id="i-power" viewBox="0 0 24 24"><path d="M12 3v8M6.4 6.6a8 8 0 1 0 11.2 0"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.6A8.5 8.5 0 0 1 9.4 4a8.5 8.5 0 1 0 10.6 10.6z"/></symbol>
+    <symbol id="i-contrast" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 2a7 7 0 0 1 0 14z" fill-rule="evenodd"/></symbol>
+  </defs>
+</svg>
 
+<nav class="nav" id="nav" aria-label="Main">
+  <a class="brand" href="#top"><img src="/assets/mascot.svg" alt="" width="22" height="22">OpenLookAway</a>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#install">Install</a>
+    <a href="#faq">FAQ</a>
+    <a href="https://github.com/yoelgal/openlookaway">GitHub</a>
+  </div>
+  <a class="nav-dl" href="#install" data-download><svg class="apple" aria-hidden="true"><use href="#apple"/></svg>Download</a>
+</nav>
+
+<main id="top">
+  <!-- 2. hero -->
   <header class="hero">
-    <span class="badge"><i></i>Free &amp; open source · macOS 14+</span>
-    <h1 class="serif">Your eyes need a <em>break.</em></h1>
-    <p class="lede">A quiet break reminder that lives in your Mac's menu bar. It nudges you to look away, blink, and sit up, and it knows when to stay out of your way.</p>
-
-    <div class="install">
-      <div class="cmd"><code>curl -fsSL https://lookaway.yoelgal.com/install.sh | bash</code><button type="button" data-copy>Copy</button></div>
-      <p class="hint">Paste into Terminal. It's installed and running in about 5 seconds. &nbsp;·&nbsp; <a href="#install">Other ways to install</a></p>
+    <div class="glow" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <div class="container">
+      <a class="announce" href="https://github.com/yoelgal/openlookaway/releases"><b>v0.2</b>A whole new look<svg class="ic" aria-hidden="true"><use href="#i-right"/></svg></a>
+      <img class="app-icon" src="/assets/icon.png" width="110" height="110" alt="OpenLookAway app icon">
+      <h1>Step back from the screen.<br>Come back <em class="serif">sharper</em>.</h1>
+      <p class="lede">A free, open-source break reminder for Mac. Gentle eye breaks, posture and blink nudges, and it stays quiet while you're busy.</p>
+      <a class="btn" href="#install" data-download><svg class="apple" aria-hidden="true"><use href="#apple"/></svg>Download for Mac</a>
+      <p class="meta"><span>v0.2.0</span><span>macOS 14+</span><span><button type="button" data-tab-open="brew">Install via Homebrew</button></span></p>
     </div>
 
-    <div class="stage" id="stage" aria-hidden="true">
-      <div class="menubar">
-        <span><b></b> Finder &nbsp; File &nbsp; Edit &nbsp; View</span>
-        <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg><em id="mbt" style="font-style:normal;font-variant-numeric:tabular-nums">0:07</em> &nbsp; Sat 9:41</span>
-      </div>
-      <div class="window"><i style="width:40%"></i><i></i><i style="width:85%"></i><i style="width:70%"></i><i></i><i style="width:55%"></i></div>
-      <div class="toast"><b>👁 Break in <span id="hut">7</span>s</b><div class="row"><span>Start now</span><span>+1m</span><span>+5m</span><span>Skip</span></div></div>
-      <div class="overlay">
-        <h3>Look away</h3>
-        <p>Look at something at least 20 feet away.</p>
-        <div class="t" id="bt">0:20</div>
-        <div class="pills"><span>+1 min</span><span>+5 min</span><span>Skip</span></div>
+    <!-- 3. hero demo -->
+    <div class="container demo-wrap rv">
+      <div class="fit demo" style="--w:1200;--h:760" role="img" aria-label="Animated demo: while you code, a heads-up card counts down, a small countdown follows the cursor, then the screen blurs into a break with a timer and Skip Break and Lock Screen buttons.">
+        <div class="fit-in desk" id="desk" data-p="work" aria-hidden="true">
+          <div class="mbar">
+            <div class="mbar-l"><svg class="apple"><use href="#apple"/></svg><span>Xcode</span><span>File</span><span>Edit</span><span>View</span><span>Window</span></div>
+            <div class="mbar-r"><span class="mb-pill"><svg><use href="#mono"/></svg><span id="mbt">1m</span></span><svg><use href="#i-wifi"/></svg><svg><use href="#i-vol"/></svg><svg><use href="#i-cc"/></svg><span>Tue 14:19</span></div>
+          </div>
+          <div class="editor">
+            <div class="ed-title"><i class="tl"></i><i class="tl"></i><i class="tl"></i><p>BreakTimer.swift — OpenLookAway</p></div>
+            <div class="ed-side">
+              <p class="h">EXPLORER</p>
+              <p>▾ OpenLookAway</p>
+              <p class="f">AppDelegate.swift</p>
+              <p class="f on">BreakTimer.swift</p>
+              <p class="f">HeadsUp.swift</p>
+              <p class="f">Overlay.swift</p>
+              <p class="f">SmartPause.swift</p>
+              <p class="f">SettingsView.swift</p>
+              <p class="f">Stats.swift</p>
+              <p class="f">Style.swift</p>
+              <p>▸ Resources</p>
+              <p>Package.swift</p>
+              <p>LICENSE</p>
+            </div>
+            <div class="ed-code"><div><i>1</i><span class="k">import</span> AppKit</div><div><i>2</i></div><div><i>3</i><span class="k">final class</span> <span class="t">BreakTimer</span> {</div><div><i>4</i>    <span class="k">var</span> interval: <span class="t">TimeInterval</span> = <span class="n">20</span> * <span class="n">60</span></div><div><i>5</i>    <span class="k">var</span> remaining: <span class="t">TimeInterval</span> = <span class="n">20</span> * <span class="n">60</span></div><div><i>6</i></div><div><i>7</i>    <span class="c">// Called once a second from the run loop.</span></div><div><i>8</i>    <span class="k">func</span> <span class="fn">tick</span>() {</div><div><i>9</i>        <span class="k">guard</span> !<span class="t">SmartPause</span>.micInUse,</div><div><i>10</i>              !<span class="t">SmartPause</span>.isFullscreen <span class="k">else</span> { <span class="k">return</span> }</div><div><i>11</i>        <span class="k">if</span> <span class="t">Idle</span>.seconds &gt; <span class="n">120</span> { <span class="fn">reset</span>(); <span class="k">return</span> }</div><div><i>12</i>        remaining -= <span class="n">1</span></div><div><i>13</i>        <span class="k">if</span> remaining == <span class="n">60</span> { <span class="t">HeadsUp</span>.<span class="fn">show</span>() }</div><div><i>14</i>        <span class="k">if</span> remaining &lt;= <span class="n">0</span> { <span class="t">BreakScreen</span>.<span class="fn">present</span>() }</div><div><i>15</i>    }<span class="caret"></span></div><div><i>16</i>}</div></div>
+            <div class="ed-status"><span>main</span><span>Swift</span><span>Ln 15, Col 6</span><span style="margin-left:auto">UTF-8</span></div>
+          </div>
+
+          <div class="heads">
+            <div class="heads-top">
+              <div class="hu-ring"><svg viewBox="0 0 48 48"><circle id="huring" cx="24" cy="24" r="22" pathLength="100" stroke-dasharray="100" stroke-dashoffset="0"/></svg></div>
+              <div><b id="hut">00:10</b><small>Nearly there. Finish your thought.</small></div>
+            </div>
+            <div class="hu-pills"><span>Start this break now</span><span>+1m</span><span>+5m</span><span>+15m</span></div>
+          </div>
+
+          <div class="float" id="float"><span class="tile-m"><svg><use href="#eyes"/></svg></span>Starting break in <span id="flt">05</span></div>
+          <svg class="cursor" id="cursor"><use href="#i-cursorarrow"/></svg>
+
+          <div class="brk">
+            <div class="brk-clock"><svg><use href="#i-clock"/></svg>14:20</div>
+            <div class="brk-mid">
+              <h3>Rest your eyes</h3>
+              <p>Pick something in the distance and let your eyes relax until the timer ends.</p>
+              <hr>
+              <div class="brk-count" id="bct">00:20</div>
+            </div>
+            <div class="brk-bot">
+              <div class="brk-pills">
+                <span class="glass-pill"><svg class="skip-ring" viewBox="0 0 24 24" id="skipring"><circle cx="12" cy="12" r="9" pathLength="100"/></svg><svg id="skipicon" style="display:none"><use href="#i-skip"/></svg>Skip Break</span>
+                <span class="glass-pill"><svg><use href="#i-lock"/></svg>Lock Screen</span>
+              </div>
+              <small>3 snoozes left today<br>Press <kbd>Esc</kbd> twice to skip</small>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </header>
 
-  <section id="features">
-    <h2 class="serif">Built for people who forget to blink</h2>
-    <p class="sub">Every 20 minutes, look at something 20 feet away for 20 seconds. OpenLookAway handles the remembering.</p>
-    <div class="grid">
-      <div class="card"><div class="ic">◐</div><h4>Gentle full-screen breaks</h4><p>A calm, blurred overlay across every display with a countdown and a reminder of what to do. Longer stretch breaks every few rounds.</p></div>
-      <div class="card"><div class="ic">⏱</div><h4>A heads-up first</h4><p>A small card appears seconds before a break so you can finish your sentence. Start now, snooze a minute, or skip it.</p></div>
-      <div class="card"><div class="ic">☏</div><h4>Pauses for calls</h4><p>When your mic is in use, it waits. No break screen in the middle of a Zoom. It can also pause for fullscreen videos and games.</p></div>
-      <div class="card"><div class="ic">☾</div><h4>Knows you stepped away</h4><p>Get up for coffee or close the lid, and that counts as a break. The timer starts fresh when you're back.</p></div>
-      <div class="card"><div class="ic">👁</div><h4>Blink &amp; posture nudges</h4><p>Optional little reminders in the corner to blink slowly or sit up tall. They vanish on their own.</p></div>
-      <div class="card"><div class="ic">✎</div><h4>Make it yours</h4><p>Set your own intervals, break lengths, and break messages. Countdown in the menu bar, today's stats a click away.</p></div>
+  <!-- 4 + 5. benefits and honest carousel -->
+  <section class="band" id="features" aria-label="Why OpenLookAway">
+    <div class="container">
+      <div class="benefits">
+        <div class="rv"><div class="tile-dark"><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg></div><p>Fewer dry, tired eyes<br>by the end of the day</p></div>
+        <div class="rv"><div class="tile-dark"><svg class="ic" aria-hidden="true"><use href="#i-target"/></svg></div><p>Pauses that wait<br>for a good moment</p></div>
+        <div class="rv"><div class="tile-dark"><svg class="ic" aria-hidden="true"><use href="#i-repeat"/></svg></div><p>Good screen habits,<br>on autopilot</p></div>
+      </div>
+
+      <div class="carousel rv" role="region" aria-roledescription="carousel" aria-label="Why it's open source">
+        <button class="arrow l" type="button" data-car="-1" aria-label="Previous card"><svg class="ic"><use href="#i-left"/></svg></button>
+        <div class="stack" aria-live="polite">
+          <article class="hcard on"><div class="badge"><svg class="ic" aria-hidden="true"><use href="#i-gift"/></svg></div><h3>Free, and staying that way</h3><p>No trial, no Pro tier, no licence key. Every feature is in the one download.</p><span class="tag">Free forever</span></article>
+          <article class="hcard"><div class="badge"><svg class="ic" aria-hidden="true"><use href="#i-code"/></svg></div><h3>MIT licensed</h3><p>Read every line, fork it, change it, ship your own version. The whole project lives on GitHub.</p><span class="tag">Open source</span></article>
+          <article class="hcard"><div class="badge"><svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg></div><h3>Nothing phones home</h3><p>No account and no analytics. The only request it ever makes is a check for new releases on GitHub.</p><span class="tag">No tracking</span></article>
+          <article class="hcard"><div class="badge"><svg class="ic" aria-hidden="true"><use href="#i-bolt"/></svg></div><h3>Native Swift</h3><p>Built with Apple's own frameworks, so it sits in the menu bar using next to no CPU or memory.</p><span class="tag">No Electron</span></article>
+          <article class="hcard"><div class="badge"><svg class="ic" aria-hidden="true"><use href="#i-feather"/></svg></div><h3>Small on purpose</h3><p>A lean menu bar app that does one job well. No bundled browser, no helper daemons, no clutter.</p><span class="tag">Tiny footprint</span></article>
+        </div>
+        <button class="arrow r" type="button" data-car="1" aria-label="Next card"><svg class="ic"><use href="#i-right"/></svg></button>
+      </div>
+      <div class="dots" id="dots" aria-hidden="true"></div>
     </div>
   </section>
 
-  <section id="install">
-    <h2 class="serif">Installed in one line</h2>
-    <p class="sub">No App Store, no account, no drag-and-drop. Just paste this into Terminal.</p>
-    <div class="steps">
-      <div class="card"><h4>Open Terminal</h4><p>Press <b>⌘ Space</b>, type <b>Terminal</b>, and hit Return.</p></div>
-      <div class="card"><h4>Paste the command</h4><p>Copy the command above, paste it with <b>⌘ V</b>, and press Return.</p></div>
-      <div class="card"><h4>Look up</h4><p>OpenLookAway opens by itself. The 👁 in your menu bar is your break timer. It also starts at login.</p></div>
+  <!-- 6. flow -->
+  <section class="sec" aria-labelledby="flow-h">
+    <div class="container">
+      <div class="rv">
+        <div class="sec-icon"><span><svg class="ic" aria-hidden="true"><use href="#i-leaf"/></svg></span></div>
+        <h2 id="flow-h">Rest without losing your place</h2>
+        <p class="sub">OpenLookAway gives you a little warning before each break and lets you push it back when you're mid-thought, so pausing never feels like being interrupted.</p>
+      </div>
+      <div class="flow rv">
+        <div class="flow-card">
+          <div class="fit flow-mock" style="--w:1120;--h:560" role="img" aria-label="Mac desktop with the OpenLookAway menu bar timer, a heads-up card at the top of the screen and a small countdown by the cursor.">
+            <div class="fit-in fdesk" aria-hidden="true">
+              <div class="mbar">
+                <div class="mbar-l"><svg class="apple"><use href="#apple"/></svg></div>
+                <div class="mbar-r"><span class="mb-pill"><svg><use href="#mono"/></svg><span id="mbt2">0:33</span></span><svg><use href="#i-wifi"/></svg><svg><use href="#i-vol"/></svg><svg><use href="#i-cc"/></svg></div>
+              </div>
+              <div class="heads">
+                <div class="heads-top">
+                  <div class="hu-ring"><svg viewBox="0 0 48 48"><circle id="huring2" cx="24" cy="24" r="22" pathLength="100" stroke-dasharray="100" stroke-dashoffset="45"/></svg></div>
+                  <div><b id="hut2">00:33</b><small>Almost break time. Wrap up this line.</small></div>
+                </div>
+                <div class="hu-pills"><span>Start this break now</span><span>+1m</span><span>+5m</span><span>+15m</span></div>
+              </div>
+              <svg class="cursor"><use href="#i-cursorarrow"/></svg>
+              <div class="float"><span class="tile-m"><svg><use href="#eyes"/></svg></span>Starting break in <span id="flt2">05</span></div>
+            </div>
+          </div>
+          <div class="features3">
+            <div><div class="tile-dark"><svg class="ic" aria-hidden="true"><use href="#i-bell"/></svg></div><h3>Heads-up card</h3><p>A small card drops in before each break. Start it now or snooze by a minute or more.</p></div>
+            <div><div class="tile-dark"><svg class="ic" aria-hidden="true"><use href="#i-bar"/></svg></div><h3>Menu bar control</h3><p>Time left at a glance, plus pause, skip or start a break in one click.</p></div>
+            <div><div class="tile-dark"><svg class="ic" aria-hidden="true"><use href="#i-cursor"/></svg></div><h3>Countdown at your cursor</h3><p>The final seconds ride along with your pointer, so no break arrives out of nowhere.</p></div>
+          </div>
+        </div>
+      </div>
     </div>
-    <p class="note">Using Homebrew? <code style="font:14px 'JetBrains Mono',monospace;background:#ebe8e1;padding:2px 6px;border-radius:5px">brew install --cask yoelgal/tap/openlookaway</code></p>
-    <p class="note">Rather download it? Grab <a href="https://github.com/yoelgal/openlookaway/releases/latest/download/OpenLookAway.zip">OpenLookAway.zip</a>, unzip it, and move it to Applications. The first time you open it, macOS will warn you. Go to <b>System Settings → Privacy &amp; Security</b> and click <b>Open Anyway</b>. The FAQ explains why.</p>
   </section>
 
-  <section id="faq">
-    <h2 class="serif">Questions</h2>
-    <div class="faq">
-      <details><summary>Why a terminal command instead of a download button?</summary>
-        <p>Apple charges $99/year to notarize apps. Without that, macOS blocks apps downloaded through a browser behind a warning and a trip to System Settings. Files fetched with <code>curl</code> aren't flagged, so the one-liner installs and opens the app with no warnings. The app itself is still code-signed (ad-hoc), so macOS will notice if anyone tampers with it.</p></details>
-      <details><summary>Is it safe to pipe a script into bash?</summary>
-        <p>It's a fair question. <a href="/install.sh">Read the script</a> first: it's about 50 lines. It downloads the latest release from GitHub, moves it to Applications, and opens it. It doesn't use sudo and installs nothing else. Everything is <a href="https://github.com/yoelgal/openlookaway">open source</a>, and releases are built by GitHub Actions straight from the code.</p></details>
-      <details><summary>Does it collect any data?</summary>
-        <p>No. No account, no analytics, no tracking. Its only network request checks GitHub for new versions.</p></details>
-      <details><summary>How do I update or uninstall?</summary>
-        <p>Updates: choose <b>Check for Updates…</b> from the menu bar icon, or run the install command again. Uninstall: quit it from the menu and drag <b>OpenLookAway</b> from Applications to the Trash.</p></details>
-      <details><summary>Which Macs are supported?</summary>
-        <p>Any Mac on macOS 14 Sonoma or later, Apple Silicon or Intel. It's a native Swift app, not Electron, and it uses almost no CPU or memory.</p></details>
-      <details><summary>Is this the official LookAway?</summary>
-        <p>No. It's an independent, open-source project inspired by <a href="https://lookaway.com">LookAway</a>, a polished paid app with extras like iPhone sync. If you want those, support the original.</p></details>
+  <!-- 7. auto pause -->
+  <section class="pauses" aria-labelledby="pause-h">
+    <div class="container rv">
+      <h2 id="pause-h" class="caption">Holds off automatically during</h2>
+      <div class="chips">
+        <div class="chip"><span class="g1"><svg class="ic" aria-hidden="true"><use href="#i-mic"/></svg></span>Meetings &amp; calls</div>
+        <div class="chip"><span class="g2"><svg class="ic" aria-hidden="true"><use href="#i-video"/></svg></span>Video playback</div>
+        <div class="chip"><span class="g3"><svg class="ic" aria-hidden="true"><use href="#i-full"/></svg></span>Fullscreen apps</div>
+        <div class="chip"><span class="g4"><svg class="ic" aria-hidden="true"><use href="#i-cup"/></svg></span>Stepping away</div>
+      </div>
     </div>
   </section>
 
-  <div class="cta">
-    <h2 class="serif">Look away. Come back sharper.</h2>
-    <div class="install">
-      <div class="cmd"><code>curl -fsSL https://lookaway.yoelgal.com/install.sh | bash</code><button type="button" data-copy>Copy</button></div>
+  <!-- 8. posture & blink -->
+  <section class="sec" aria-labelledby="nudge-h">
+    <div class="container">
+      <div class="rv">
+        <div class="sec-icon"><span><svg class="ic" aria-hidden="true"><use href="#i-person"/></svg></span></div>
+        <h2 id="nudge-h">Sit tall. Blink often.</h2>
+        <p class="sub">Optional nudges float onto the screen for a couple of seconds, a quiet cue to straighten up or rest your eyes, then fade away by themselves.</p>
+      </div>
+      <div class="nudges rv">
+        <div class="ncard a" role="img" aria-label="Posture nudge: a gradient circle with an up arrow stretches upward, reminding you to sit up straight.">
+          <div class="nudge posture" aria-hidden="true"><div class="track"></div><div class="ball"><svg viewBox="0 0 24 24"><path d="M6 11l6-6 6 6"/><path class="shaft" d="M12 5v14"/></svg></div></div>
+          <span class="label">Posture nudge</span>
+        </div>
+        <div class="ncard b" role="img" aria-label="Blink nudge: the mascot squeezes its eyes shut, then relaxes into a smile.">
+          <div class="nudge blink" aria-hidden="true"><div class="track"></div><div class="ball"><svg class="squint" viewBox="0 0 40 40"><path d="M8 15l7 5-7 5M32 15l-7 5 7 5"/></svg><svg class="happy" viewBox="0 0 40 40"><path d="M7 23a5.5 5.5 0 0 1 11 0M22 23a5.5 5.5 0 0 1 11 0"/></svg></div></div>
+          <span class="label">Blink nudge</span>
+        </div>
+      </div>
     </div>
+  </section>
+
+  <!-- 9. settings -->
+  <section class="sec" aria-labelledby="fit-h">
+    <div class="container">
+      <div class="rv">
+        <div class="sec-icon"><span><svg class="ic" aria-hidden="true"><use href="#i-sliders"/></svg></span></div>
+        <h2 id="fit-h">Tuned to how<br>you actually work</h2>
+      </div>
+      <div class="mock-center rv">
+        <div class="fit" style="--w:860;--h:640" role="img" aria-label="OpenLookAway settings window on the Screen Breaks pane: breaks every 20 minutes for 20 seconds, long breaks, and the three enforcement modes with Balanced selected.">
+          <div class="fit-in" aria-hidden="true">
+            <div class="sw">
+              <div class="sw-side">
+                <div class="sw-tls"><i></i><i></i><i></i></div>
+                <div class="sw-row"><span class="st t-violet"><svg><use href="#i-gear"/></svg></span>General</div>
+                <p class="sw-h">Focus &amp; Wellbeing</p>
+                <div class="sw-row on"><span class="st t-pink"><svg><use href="#i-eye"/></svg></span>Screen Breaks</div>
+                <div class="sw-row"><span class="st t-pink"><svg><use href="#i-pause"/></svg></span>Smart Pause</div>
+                <div class="sw-row"><span class="st t-pink"><svg><use href="#i-heart"/></svg></span>Wellness Reminders</div>
+                <p class="sw-h">Behavior &amp; Feedback</p>
+                <div class="sw-row"><span class="st t-rose"><svg><use href="#i-bell"/></svg></span>Alerts / Nudges</div>
+                <div class="sw-row"><span class="st t-red"><svg><use href="#i-speaker"/></svg></span>Sounds</div>
+                <div class="sw-row"><span class="st t-orange"><svg><use href="#i-brush"/></svg></span>Break Screen</div>
+                <p class="sw-h">OpenLookAway</p>
+                <div class="sw-row"><span class="st t-yellow"><svg><use href="#i-info"/></svg></span>About</div>
+              </div>
+              <div class="sw-main">
+                <div class="sw-top"><span class="st t-pink"><svg><use href="#i-eye"/></svg></span>Screen Breaks</div>
+                <div class="sw-body">
+                  <p class="sw-lbl">General</p>
+                  <div class="grp">
+                    <div class="gr"><span>Show breaks every</span><span class="val">20 min<span class="step"><svg><use href="#i-updown"/></svg></span></span></div>
+                    <div class="gr"><span>Break duration</span><span class="val">20 seconds<span class="step"><svg><use href="#i-updown"/></svg></span></span></div>
+                    <div class="gr"><span>Long breaks</span><span class="val dim">Every 3rd break is 5 minutes<svg class="chev"><use href="#i-chev"/></svg></span></div>
+                  </div>
+                  <p class="sw-lbl">Break enforcement</p>
+                  <div class="grp">
+                    <div class="enf">
+                      <div><div class="thumb"><span><svg><use href="#i-skip"/></svg>Skip Break</span></div><b>Casual</b><small>Skip anytime</small></div>
+                      <div class="sel"><div class="thumb"><span><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" stroke-dasharray="38 60"/></svg>Skip Break</span></div><b>Balanced</b><small>Skip after a pause</small></div>
+                      <div class="hardcore"><div class="thumb"><span><svg><use href="#i-ban"/></svg>Skip Break</span></div><b>Hardcore</b><small>No skips allowed</small></div>
+                    </div>
+                    <div class="gr"><span>Snoozes allowed per day</span><span class="val">3<span class="step"><svg><use href="#i-updown"/></svg></span></span></div>
+                  </div>
+                  <p class="sw-lbl">More</p>
+                  <div class="grp">
+                    <div class="gr"><span>Double Esc on break screen</span><span class="val">Skip break<span class="step"><svg><use href="#i-updown"/></svg></span></span></div>
+                    <div class="gr"><span>Lock my Mac when a break starts</span><span class="tog"></span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-wrap rv">
+        <div class="fit" style="--w:760;--h:560" role="img" aria-label="The menu bar panel. Now tab: a ring counting down 18:32 until the next break with Take a break now, Pause and Skip next. Stats tab: Today's Screen Score of 86 with break and screen time totals.">
+          <div class="fit-in stats-card" aria-hidden="true">
+            <div class="panel">
+              <div class="p-head"><div class="seg"><span class="on">Now</span><span>Stats</span></div><svg class="gear"><use href="#i-gear"/></svg></div>
+              <div class="ring">
+                <svg viewBox="0 0 140 140"><circle cx="70" cy="70" r="62" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="8"/><circle id="ring" cx="70" cy="70" r="62" fill="none" stroke="url(#bg)" stroke-width="8" stroke-linecap="round" pathLength="100" stroke-dasharray="92.6 100"/></svg>
+                <div class="ring-txt"><b id="ringt">18:32</b><small>until your next break</small></div>
+              </div>
+              <p class="p-status">Running · 6 breaks so far today</p>
+              <div class="p-cta">Take a break now</div>
+              <div class="p-row"><span>Pause <svg viewBox="0 0 24 24"><use href="#i-down"/></svg></span><span>Skip next</span></div>
+              <div class="p-foot"><span>Quit</span><span>v0.2.0</span></div>
+            </div>
+            <div class="panel">
+              <div class="p-head"><div class="seg"><span>Now</span><span class="on">Stats</span></div><svg class="gear"><use href="#i-gear"/></svg></div>
+              <p class="score-t">Today's Screen Score</p>
+              <div class="gauge">
+                <svg viewBox="0 0 180 104" width="180" height="104"><path d="M18 94a72 72 0 0 1 144 0" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="12" stroke-linecap="round"/><path d="M18 94a72 72 0 0 1 144 0" fill="none" stroke="url(#bg)" stroke-width="12" stroke-linecap="round" pathLength="100" stroke-dasharray="86 100"/></svg>
+                <b>86</b>
+              </div>
+              <p class="gauge-cap">Great pacing today.</p>
+              <div class="pc"><h4>Breaks</h4>
+                <div class="pr"><i></i><span>Breaks taken</span><em>6</em><em>2m</em></div>
+                <div class="pr"><i class="p"></i><span>Natural breaks</span><em>3</em><em>48m</em></div>
+                <div class="pr"><i class="o"></i><span>Skipped / snoozed</span><em>1</em><em></em></div>
+              </div>
+              <div class="pc"><h4>Screen time</h4>
+                <div class="pr"><i class="o"></i><span>Total screen time</span><em>4h 52m</em></div>
+                <div class="pr"><i class="o"></i><span>Longest stretch</span><em>34m</em></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="mock-cap">Click the mascot in the menu bar for the countdown, quick controls, and today's Screen Score.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10. customisation -->
+  <section class="custom" aria-labelledby="cust-h">
+    <div class="container">
+      <h2 id="cust-h" class="rv">Choose the sounds, backdrop and words<br>that make a break feel like your own</h2>
+      <div class="fit cstage rv" style="--w:1200;--h:540">
+        <div class="fit-in">
+          <div class="cc" style="left:160px;top:20px;width:480px" role="img" aria-label="Sounds settings: chimes on at the start and end of a break, the Glass sound, and a volume slider.">
+            <div class="gr"><span>Play sound when the break begins</span><span class="tr"><span class="tog on"></span><span class="play"></span></span></div>
+            <div class="gr"><span>Play sound when the break ends</span><span class="tr"><span class="tog on"></span><span class="play"></span></span></div>
+            <div class="gr"><span>Sound</span><span class="val">Glass<span class="step"><svg><use href="#i-updown"/></svg></span></span></div>
+            <div class="gr"><span>Volume</span><span class="tr"><svg class="spk"><use href="#i-speaker"/></svg><span class="slider"></span><svg class="spk"><use href="#i-vol"/></svg></span></div>
+          </div>
+          <p class="note" style="left:60px;top:228px;width:210px">Pick a chime for the start and end of every break</p>
+          <svg class="hand" style="left:66px;top:88px" width="100" height="130" viewBox="0 0 100 130" aria-hidden="true"><path d="M92 8C50 2 18 30 16 76c-1 16 1 30 5 42"/><path d="M8 106l13 14 10-17"/></svg>
+
+          <div class="cc" style="left:684px;top:78px;width:358px" role="img" aria-label="Break screen background picker with Blurred wallpaper selected, plus Gradient and Custom image.">
+            <div class="bgpick">
+              <div class="sel"><div class="bgt blur"></div>Blurred wallpaper</div>
+              <div><div class="bgt grad"></div>Gradient</div>
+              <div><div class="bgt cust"><div><svg><use href="#i-image"/></svg>Drop image</div></div>Custom image</div>
+            </div>
+          </div>
+          <p class="note" style="left:950px;top:236px;width:220px">Blur your own wallpaper, pick a gradient, or bring a photo</p>
+          <svg class="hand" style="left:1040px;top:90px" width="100" height="140" viewBox="0 0 100 140" aria-hidden="true"><path d="M6 12c40-8 76 14 78 58 1 18-2 34-7 50"/><path d="M66 112l11 16 13-13"/></svg>
+
+          <div class="cc msgs" style="left:355px;top:232px;width:490px" role="img" aria-label="Custom break messages list with add and remove buttons.">
+            <div class="msg-box">
+              <div class="gr"><span>Show my own break messages</span><span class="tog on"></span></div>
+              <div class="gr"><span>Unclench your jaw and drop your shoulders</span></div>
+              <div class="gr hl"><span>Refill your water glass</span></div>
+              <div class="gr"><span>Find a window and look outside for a bit</span></div>
+            </div>
+            <div class="msg-foot"><b>+</b><b>−</b><span>A random message is shown on each break</span></div>
+          </div>
+          <svg class="hand" style="left:400px;top:452px" width="110" height="46" viewBox="0 0 110 46" aria-hidden="true"><path d="M4 8c26 26 60 30 94 22"/><path d="M84 18l15 12-16 10"/></svg>
+          <p class="note" style="left:520px;top:470px;width:380px">Write the reminders you actually want to read</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11. designed for the Mac -->
+  <section class="container" aria-labelledby="mac-h">
+    <div class="maccard rv">
+      <div class="mbar" aria-hidden="true">
+        <div class="mbar-l"><svg class="apple"><use href="#apple"/></svg></div>
+        <div class="mbar-r"><svg><use href="#i-wifi"/></svg><svg><use href="#i-vol"/></svg><svg><use href="#i-cc"/></svg></div>
+      </div>
+      <div class="icons-row" aria-hidden="true">
+        <span class="gl"><svg style="fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round"><use href="#i-power"/></svg></span>
+        <span class="gl">⌘</span>
+        <span class="gl big"><img src="/assets/icon.png" alt="" width="84" height="84"></span>
+        <span class="gl"><svg><use href="#i-moon"/></svg></span>
+        <span class="gl"><svg><use href="#i-contrast"/></svg></span>
+      </div>
+      <p class="caption">Built natively for</p>
+      <h2 id="mac-h" class="big-serif">macOS</h2>
+      <p>Written in Swift with Apple's own frameworks. It follows dark mode, launches at login, updates itself from inside the app, and stays tiny. No Electron, no web view, nothing running that doesn't need to.</p>
+      <a class="btn" href="#install" data-download><svg class="apple" aria-hidden="true"><use href="#apple"/></svg>Download for Mac</a>
+    </div>
+  </section>
+
+  <!-- 12. install -->
+  <section class="install" id="install" aria-labelledby="inst-h">
+    <div class="container">
+      <div class="rv">
+        <h2 id="inst-h">Up and running in a minute</h2>
+        <p class="sub">No account, no App Store, no licence key. Pick whichever route you like.</p>
+      </div>
+      <div class="inst rv">
+        <div class="tabs" role="tablist" aria-label="Install method">
+          <button role="tab" id="tab-term" aria-controls="tp-term" aria-selected="true" data-tab="term">Terminal<small>(recommended)</small></button>
+          <button role="tab" id="tab-brew" aria-controls="tp-brew" aria-selected="false" tabindex="-1" data-tab="brew">Homebrew</button>
+          <button role="tab" id="tab-man" aria-controls="tp-man" aria-selected="false" tabindex="-1" data-tab="man">Manual</button>
+        </div>
+
+        <div class="tp" role="tabpanel" id="tp-term" aria-labelledby="tab-term">
+          <div class="cmd"><code id="curl">curl -fsSL https://lookaway.yoelgal.com/install.sh | bash</code><button class="copy" type="button" data-copy="curl">Copy</button></div>
+          <ol class="steps">
+            <li><b>Open Terminal.</b> Press <span class="keycap">⌘ Space</span>, type Terminal, and hit Return.</li>
+            <li><b>Paste and run.</b> Paste the command with <span class="keycap">⌘ V</span> and press Return.</li>
+            <li><b>Look up.</b> The mascot appears in your menu bar. That's your break timer.</li>
+          </ol>
+          <p class="why">Why Terminal? The app isn't notarised by Apple, and files fetched with <code class="mono">curl</code> aren't quarantined, so it opens without a Gatekeeper warning. <a href="/install.sh">Read install.sh</a> before you run it.</p>
+        </div>
+
+        <div class="tp" role="tabpanel" id="tp-brew" aria-labelledby="tab-brew" hidden>
+          <div class="cmd"><code id="brew">brew install --cask yoelgal/tap/openlookaway</code><button class="copy" type="button" data-copy="brew">Copy</button></div>
+          <p class="why">Installs from the <a href="https://github.com/yoelgal/homebrew-tap">yoelgal/homebrew-tap</a> cask. Update later with <code class="mono">brew upgrade --cask openlookaway</code>.</p>
+        </div>
+
+        <div class="tp" role="tabpanel" id="tp-man" aria-labelledby="tab-man" hidden>
+          <a class="dl-zip" href="https://github.com/yoelgal/openlookaway/releases/latest/download/OpenLookAway.zip"><svg class="ic" aria-hidden="true"><use href="#i-dl"/></svg>Download OpenLookAway.zip</a>
+          <p>Unzip it and drag OpenLookAway into Applications. Because the app isn't notarised, macOS stops it the first time:</p>
+          <ol>
+            <li>Open the app once and dismiss the warning.</li>
+            <li>Go to <b>System Settings → Privacy &amp; Security</b>.</li>
+            <li>Scroll down and click <b>Open Anyway</b>, then confirm.</li>
+          </ol>
+          <p class="why">Rather skip those steps? The Terminal route avoids the warning entirely.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 13. FAQ -->
+  <section class="faq" id="faq" aria-labelledby="faq-h">
+    <div class="container">
+      <h2 id="faq-h" class="rv">Questions, answered</h2>
+      <div class="faq-list rv">
+        <details><summary>Why a Terminal command instead of a normal download?</summary>
+          <p>Apple charges a yearly fee to notarise apps. Without notarisation, anything downloaded through a browser is flagged by Gatekeeper and needs a detour through System Settings. Files fetched with <code>curl</code> aren't flagged, so the one-liner installs and opens the app with no warning. The app is still code-signed (ad hoc), so macOS notices if it's been tampered with.</p></details>
+        <details><summary>Is piping a script into bash safe?</summary>
+          <p>It's a fair thing to ask. <a href="/install.sh">Read the script</a> first; it's short. It downloads the latest release from GitHub, moves it into Applications, and opens it. It never uses sudo and installs nothing else. Everything is <a href="https://github.com/yoelgal/openlookaway">open source</a> and releases are built by GitHub Actions straight from the code.</p></details>
+        <details><summary>Does it collect any data?</summary>
+          <p>No. There's no account, no analytics, and no tracking. The only network request it makes is checking GitHub for new versions. Your stats stay on your Mac.</p></details>
+        <details><summary>How do I update or uninstall it?</summary>
+          <p>To update, use <b>Check for Updates…</b> in the app, run the install command again, or <code>brew upgrade --cask openlookaway</code>. To uninstall, quit it from the menu bar panel and drag OpenLookAway from Applications to the Bin (or <code>brew uninstall --cask openlookaway</code>).</p></details>
+        <details><summary>Which Macs does it run on?</summary>
+          <p>Any Mac on macOS 14 Sonoma or later, Apple silicon or Intel.</p></details>
+        <details><summary>Is this the official LookAway?</summary>
+          <p>No. OpenLookAway is an independent open-source project inspired by <a href="https://lookaway.com">LookAway</a>, a polished paid app with extras such as iPhone sync and automations. If you want those, support the original.</p></details>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- 14. footer -->
+<footer>
+  <div class="container foot">
+    <div class="foot-brand">
+      <img src="/assets/mascot.svg" alt="OpenLookAway" width="34" height="34">
+      <p>MIT licensed · made by <a href="https://yoelgal.com">Yoel Gal</a></p>
+      <a class="foot-gh" href="https://github.com/yoelgal/openlookaway" aria-label="OpenLookAway on GitHub"><svg aria-hidden="true"><use href="#i-gh"/></svg></a>
+    </div>
+    <div><h4>Product</h4><ul><li><a href="#install" data-download>Download</a></li><li><a href="https://github.com/yoelgal/openlookaway/releases">Releases</a></li><li><a href="https://github.com/yoelgal/homebrew-tap">Homebrew tap</a></li></ul></div>
+    <div><h4>Resources</h4><ul><li><a href="https://github.com/yoelgal/openlookaway">GitHub</a></li><li><a href="https://github.com/yoelgal/openlookaway/issues">Report a bug</a></li><li><a href="/install.sh">install.sh</a></li></ul></div>
+    <div><h4>Project</h4><ul><li><a href="https://github.com/yoelgal/openlookaway/blob/main/LICENSE">License</a></li><li><a href="https://lookaway.com">Inspired by LookAway</a></li></ul></div>
   </div>
+  <div class="word" aria-hidden="true">OPENLOOKAWAY</div>
+</footer>
 
-  <footer>
-    <span>OpenLookAway · MIT licensed · made by <a href="https://yoelgal.com">Yoel Gal</a></span>
-    <span><a href="https://github.com/yoelgal/openlookaway">GitHub</a> &nbsp;·&nbsp; <a href="https://github.com/yoelgal/openlookaway/releases">Releases</a> &nbsp;·&nbsp; <a href="https://github.com/yoelgal/openlookaway/issues">Report a bug</a></span>
-  </footer>
-</div>
+<div class="toast" id="toast" role="status" aria-live="polite"><i></i><span id="toast-t"></span></div>
 
 <script>
-  document.querySelectorAll("[data-copy]").forEach(btn => btn.addEventListener("click", async () => {
-    await navigator.clipboard.writeText(btn.previousElementSibling.textContent);
-    btn.textContent = "Copied ✓";
-    setTimeout(() => btn.textContent = "Copy", 1800);
-  }));
+document.documentElement.classList.add('js');
+const $ = s => document.querySelector(s), $$ = s => document.querySelectorAll(s);
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Hero demo loop: heads-up countdown → break overlay → back to work.
-  const stage = document.getElementById("stage"), hut = document.getElementById("hut"),
-        mbt = document.getElementById("mbt"), bt = document.getElementById("bt");
-  let t = 7;
-  setInterval(() => {
-    t--;
-    if (t > 0) { stage.className = "stage"; hut.textContent = t; mbt.textContent = "0:0" + t; }
-    else if (t > -12) { stage.className = "stage breaking"; bt.textContent = "0:" + String(20 + t).padStart(2, "0"); }
-    else if (t > -16) { stage.className = "stage working"; mbt.textContent = "20m"; }
-    else t = 8;
-  }, 1000);
+// Scale fixed-size mockups to their container.
+const ro = new ResizeObserver(es => es.forEach(e => e.target.style.setProperty('--s', e.contentRect.width / +e.target.style.getPropertyValue('--w'))));
+$$('.fit').forEach(el => ro.observe(el));
+
+// Nav darkens once scrolled.
+const nav = $('#nav');
+const onScroll = () => nav.classList.toggle('scrolled', scrollY > 20);
+addEventListener('scroll', onScroll, { passive: true }); onScroll();
+
+// Copy with a textarea fallback.
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch {
+    const ta = Object.assign(document.createElement('textarea'), { value: text });
+    ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.append(ta); ta.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch {}
+    ta.remove(); return ok;
+  }
+}
+let toastT;
+function toast(msg) {
+  $('#toast-t').textContent = msg; $('#toast').classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => $('#toast').classList.remove('show'), 2600);
+}
+$$('[data-copy]').forEach(b => b.addEventListener('click', async () => {
+  const ok = await copy(document.getElementById(b.dataset.copy).textContent);
+  b.textContent = ok ? 'Copied' : 'Press ⌘C'; setTimeout(() => b.textContent = 'Copy', 1800);
+}));
+
+// Install tabs.
+const tabs = [...$$('[role="tab"]')];
+function selectTab(name, focus) {
+  tabs.forEach(t => {
+    const on = t.dataset.tab === name;
+    t.setAttribute('aria-selected', on); t.tabIndex = on ? 0 : -1;
+    document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    if (on && focus) t.focus();
+  });
+}
+tabs.forEach((t, i) => {
+  t.addEventListener('click', () => selectTab(t.dataset.tab));
+  t.addEventListener('keydown', e => {
+    const d = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+    if (d) selectTab(tabs[(i + d + tabs.length) % tabs.length].dataset.tab, true);
+  });
+});
+const goInstall = () => $('#install').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' });
+$$('[data-download]').forEach(a => a.addEventListener('click', async e => {
+  e.preventDefault(); selectTab('term'); goInstall();
+  if (await copy($('#curl').textContent)) toast('Command copied — paste it into Terminal');
+}));
+$$('[data-tab-open]').forEach(b => b.addEventListener('click', () => { selectTab(b.dataset.tabOpen); goInstall(); }));
+
+// Honest cards carousel.
+const cards = [...$$('.hcard')], dots = $('#dots');
+let ci = 0;
+cards.forEach(() => dots.append(document.createElement('button')));
+function show(n) {
+  cards[ci].classList.remove('on'); cards[ci].classList.add('out');
+  const prev = cards[ci]; setTimeout(() => prev.classList.remove('out'), 450);
+  ci = (n + cards.length) % cards.length; cards[ci].classList.add('on');
+  [...dots.children].forEach((d, i) => d.setAttribute('aria-current', i === ci));
+}
+[...dots.children].forEach((d, i) => { d.tabIndex = -1; d.addEventListener('click', () => show(i)); });
+$$('[data-car]').forEach(b => b.addEventListener('click', () => show(ci + +b.dataset.car)));
+dots.children[0].setAttribute('aria-current', true);
+
+// Scroll reveal.
+if (!reduce && 'IntersectionObserver' in window) {
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px' });
+  $$('.rv').forEach(el => io.observe(el));
+} else $$('.rv').forEach(el => el.classList.add('in'));
+
+// Hero demo: work -> heads-up -> cursor countdown -> break screen -> work.
+const desk = $('#desk'), pad = n => String(Math.max(0, n)).padStart(2, '0');
+const cur = $('#cursor'), flt = $('#float');
+const place = (x, y) => { cur.style.transform = `translate(${x}px,${y}px)`; flt.style.transform = `translate(${x + 20}px,${y + 22}px)`; };
+function frame(ms) {
+  const s = ms / 1000;
+  let p = 'work', mb = '1m';
+  if (s < 2.5) place(760 + s * 20, 420);
+  else if (s < 8) { p = 'heads'; const t = 10 - Math.floor(s - 2.5); mb = '0:' + pad(t);
+    $('#hut').textContent = '00:' + pad(t); $('#huring').style.strokeDashoffset = (10 - t) * 9; place(640, 330); }
+  else if (s < 13) { p = 'count'; const t = 5 - Math.floor(s - 8); mb = '0:' + pad(t); $('#flt').textContent = pad(t); place(470, 440); }
+  else if (s < 21) { p = 'break'; const e = s - 13; $('#bct').textContent = '00:' + pad(20 - Math.floor(e * 2.6)); mb = '0:' + pad(20 - Math.floor(e * 2.6));
+    const lock = Math.min(1, e / 2.5); $('#skipring').style.setProperty('--o', 100 - lock * 100);
+    $('#skipring').style.display = lock < 1 ? '' : 'none'; $('#skipicon').style.display = lock < 1 ? 'none' : ''; }
+  else { mb = '20m'; place(700, 380); }
+  if (desk.dataset.p !== p) desk.dataset.p = p;
+  $('#mbt').textContent = mb;
+}
+if (reduce) { desk.dataset.p = 'break'; $('#skipring').style.display = 'none'; $('#skipicon').style.display = ''; }
+else {
+  const t0 = performance.now(); let last = -1;
+  setInterval(() => { const ms = (performance.now() - t0) % 23000; if (Math.floor(ms / 100) !== last) { last = Math.floor(ms / 100); frame(ms); } }, 100);
+  // Flow mock: heads-up ticks down, cursor countdown loops 05..01.
+  let h = 33, f = 5;
+  setInterval(() => { h = h <= 1 ? 33 : h - 1; f = f <= 1 ? 5 : f - 1;
+    $('#hut2').textContent = '00:' + pad(h); $('#mbt2').textContent = '0:' + pad(h); $('#huring2').style.strokeDashoffset = 100 - h / 60 * 100; $('#flt2').textContent = pad(f); }, 1000);
+}
 </script>
 </body>
 </html>

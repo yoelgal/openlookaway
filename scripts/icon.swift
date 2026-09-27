@@ -1,23 +1,34 @@
-// Renders the app icon: swift scripts/icon.swift out.png
+// Cuts the generated icon art out of its background into a transparent macOS squircle.
+// swift scripts/icon.swift <generated.png> <out-1024.png>
 import AppKit
 
-let size = 1024.0
-let img = NSImage(size: NSSize(width: size, height: size), flipped: false) { _ in
-    let inset = 100.0, rect = NSRect(x: inset, y: inset, width: size - 2 * inset, height: size - 2 * inset)
-    let shape = NSBezierPath(roundedRect: rect, xRadius: 185, yRadius: 185)
-    NSGraphicsContext.current?.saveGraphicsState()
-    let shadow = NSShadow()
-    shadow.shadowColor = .black.withAlphaComponent(0.3); shadow.shadowBlurRadius = 24; shadow.shadowOffset = NSSize(width: 0, height: -10)
-    shadow.set()
-    NSColor.black.setFill(); shape.fill()
-    NSGraphicsContext.current?.restoreGraphicsState()
-    NSGradient(colors: [NSColor(red: 0.30, green: 0.27, blue: 0.85, alpha: 1), NSColor(red: 0.12, green: 0.70, blue: 0.68, alpha: 1)])!
-        .draw(in: shape, angle: -60)
-    let cfg = NSImage.SymbolConfiguration(pointSize: 430, weight: .regular)
-        .applying(.init(paletteColors: [.white]))
-    let eye = NSImage(systemSymbolName: "eye", accessibilityDescription: nil)!.withSymbolConfiguration(cfg)!
-    eye.draw(in: NSRect(x: (size - eye.size.width) / 2, y: (size - eye.size.height) / 2, width: eye.size.width, height: eye.size.height))
-    return true
+let args = CommandLine.arguments
+let src = NSBitmapImageRep(data: try! Data(contentsOf: URL(fileURLWithPath: args[1])))!
+let (w, h) = (src.pixelsWide, src.pixelsHigh)
+
+// Bounding box of the tile = everything that isn't near-white background.
+var (minX, minY, maxX, maxY) = (w, h, 0, 0)
+for y in stride(from: 0, to: h, by: 2) {
+    for x in stride(from: 0, to: w, by: 2) {
+        let c = src.colorAt(x: x, y: y)!
+        if c.redComponent + c.greenComponent + c.blueComponent < 2.7 {
+            minX = min(minX, x); maxX = max(maxX, x); minY = min(minY, y); maxY = max(maxY, y)
+        }
+    }
 }
-let rep = NSBitmapImageRep(data: img.tiffRepresentation!)!
-try! rep.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: CommandLine.arguments[1]))
+// Trim a few px so no background fringe survives the mask.
+let inset = 6
+let crop = CGRect(x: minX + inset, y: minY + inset, width: maxX - minX - 2 * inset, height: maxY - minY - 2 * inset)
+let tile = src.cgImage!.cropping(to: crop)!
+
+let size = 1024, box = 824.0, pad = 100.0
+let ctx = CGContext(data: nil, width: size, height: size, bitsPerComponent: 8, bytesPerRow: 0,
+                    space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+let rect = CGRect(x: pad, y: pad, width: box, height: box)
+ctx.addPath(CGPath(roundedRect: rect, cornerWidth: box * 0.225, cornerHeight: box * 0.225, transform: nil))
+ctx.clip()
+ctx.interpolationQuality = .high
+ctx.draw(tile, in: rect)
+let out = NSBitmapImageRep(cgImage: ctx.makeImage()!)
+try! out.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: args[2]))
+print("bbox", crop)

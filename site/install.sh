@@ -44,6 +44,6 @@ xattr -dr com.apple.quarantine "$DEST/$NAME" 2>/dev/null || true
 step "Opening OpenLookAway"
 open "$DEST/$NAME"
 
-printf "\n%s✓ Installed.%s Look for the eye icon in your menu bar.\n" "$green" "$reset"
+printf "\n%s✓ Installed.%s Look for the little face in your menu bar.\n" "$green" "$reset"
 printf "%s  Update: run this command again, or use \"Check for Updates…\" in the menu.\n" "$dim"
 printf "  Uninstall: quit the app and drag it from %s to the Trash.%s\n" "$DEST" "$reset"

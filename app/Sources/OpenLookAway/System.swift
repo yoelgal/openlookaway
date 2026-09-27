@@ -1,5 +1,6 @@
 import AppKit
 import CoreAudio
+import IOKit.pwr_mgt
 
 enum System {
     /// Seconds since the last keyboard/mouse/trackpad event.
@@ -39,5 +40,22 @@ enum System {
                   let b = CGRect(dictionaryRepresentation: dict) else { return false }
             return screens.contains("\(Int(b.width))x\(Int(b.height))")
         }
+    }
+
+    /// True while something keeps the display awake: video players, browsers playing video, presentations.
+    // ponytail: any display-sleep assertion counts, so tools like caffeinate also pause breaks; that's why it's opt-in.
+    static func videoPlaying() -> Bool {
+        var status: Unmanaged<CFDictionary>?
+        guard IOPMCopyAssertionsStatus(&status) == kIOReturnSuccess,
+              let dict = status?.takeRetainedValue() as? [String: Int] else { return false }
+        return (dict["PreventUserIdleDisplaySleep"] ?? 0) > 0
+    }
+
+    /// Locks the screen like the Control Center "Lock Screen" item.
+    static func lockScreen() {
+        guard let handle = dlopen("/System/Library/PrivateFrameworks/login.framework/Versions/Current/login", RTLD_NOW),
+              let sym = dlsym(handle, "SACLockScreenImmediate") else { return }
+        typealias Lock = @convention(c) () -> Int32
+        _ = unsafeBitCast(sym, to: Lock.self)()
     }
 }
