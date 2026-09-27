@@ -208,9 +208,9 @@ private struct SmartPausePane: View {
             Text("Calls are detected when any app is using your microphone. Video playback is detected when an app keeps your display awake.")
                 .foregroundStyle(.secondary)
         }
-        if !ignored.isEmpty {
+        if ignored.contains(where: { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) != nil }) {
             Section {
-                ForEach(ignored, id: \.self) { id in
+                ForEach(ignored.filter { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) != nil }, id: \.self) { id in
                     HStack {
                         Text(NSWorkspace.shared.urlForApplication(withBundleIdentifier: id)?.deletingPathExtension().lastPathComponent ?? id)
                         Spacer()

@@ -39,7 +39,9 @@ enum Key {
         blinkMinutes: 0, postureMinutes: 30,
         soundStart: false, soundEnd: true, soundName: "Glass", volume: 0.7,
         background: 0, customImage: "", customMessages: "", showTimerInMenuBar: true,
-        ignoredMicApps: [String](),
+        // Dictation apps keep the mic warm; they aren't calls.
+        ignoredMicApps: ["com.kitlangton.Hex", "com.superduper.superwhisper", "com.electron.wispr-flow",
+                         "com.goodsnooze.MacWhisper", "com.prakashjoshipax.VoiceInk"],
     ]
 }
 
