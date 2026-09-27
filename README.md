@@ -1,4 +1,4 @@
-<p align="center"><img src="site/icon.png" width="128" alt=""></p>
+<p align="center"><img src="site/assets/icon.png" width="128" alt="OpenLookAway icon"></p>
 
 <h1 align="center">OpenLookAway</h1>
 
