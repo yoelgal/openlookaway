@@ -16,6 +16,8 @@ curl -fsSL https://lookaway.yoelgal.com/install.sh | bash
 
 That's it. It downloads the latest release to `/Applications` and opens it. Look for the eye in your menu bar.
 
+Or with Homebrew: `brew install --cask yoelgal/tap/openlookaway`
+
 Requires macOS 14 (Sonoma) or newer. Runs natively on Apple Silicon and Intel.
 
 <details>
