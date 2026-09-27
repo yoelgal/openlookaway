@@ -205,8 +205,7 @@ private struct SmartPausePane: View {
         } header: {
             Text("Pause breaks during")
         } footer: {
-            Text("Calls are detected when any app is using your microphone. Video playback is detected when an app keeps your display awake.")
-                .foregroundStyle(.secondary)
+            Footnote("Calls are detected when any app is using your microphone. Video playback is detected when an app keeps your display awake.")
         }
         if ignored.contains(where: { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) != nil }) {
             Section {
@@ -223,8 +222,7 @@ private struct SmartPausePane: View {
             } header: {
                 Text("Apps that never pause breaks")
             } footer: {
-                Text("Dictation apps keep the microphone open all the time. Use \"Ignore\" in the menu bar panel to add one here.")
-                    .foregroundStyle(.secondary)
+                Footnote("Dictation apps keep the microphone open all the time. Use \"Ignore\" in the menu bar panel to add one here.")
             }
         }
         Section {
@@ -234,8 +232,7 @@ private struct SmartPausePane: View {
         } header: {
             Text("Natural breaks")
         } footer: {
-            Text("Step away from your Mac or put it to sleep and the timer starts fresh when you're back.")
-                .foregroundStyle(.secondary)
+            Footnote("Step away from your Mac or put it to sleep and the timer starts fresh when you're back.")
         }
     }
 }
@@ -259,7 +256,7 @@ private struct WellnessPane: View {
                 Label { Text("Blink reminder") } icon: { Tile(symbol: "eye") }
             }
         } footer: {
-            Text("A small animated nudge appears for a few seconds, then gets out of your way.").foregroundStyle(.secondary)
+            Footnote("A small animated nudge appears for a few seconds, then gets out of your way.")
         }
         Section {
             HStack {
@@ -487,5 +484,19 @@ private struct ChoiceCards: View {
             }
         }
         .padding(.vertical, 4)
+    }
+}
+
+/// Section footer text: full width and left-aligned (macOS grouped forms otherwise wrap it narrow and right-aligned).
+private struct Footnote: View {
+    let text: String
+    init(_ text: String) { self.text = text }
+    var body: some View {
+        Text(text)
+            .font(.callout)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .fixedSize(horizontal: false, vertical: true)
     }
 }
