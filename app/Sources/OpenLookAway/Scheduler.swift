@@ -29,6 +29,7 @@ enum Key {
     static let customImage = "customImage"
     static let customMessages = "customMessages"
     static let showTimerInMenuBar = "showTimerInMenuBar"
+    static let ignoredMicApps = "ignoredMicApps"     // bundle IDs, e.g. dictation apps that keep the mic open
 
     static let defaults: [String: Any] = [
         workMinutes: 20, breakSeconds: 20, longBreakEvery: 3, longBreakMinutes: 5,
@@ -38,6 +39,7 @@ enum Key {
         blinkMinutes: 0, postureMinutes: 30,
         soundStart: false, soundEnd: true, soundName: "Glass", volume: 0.7,
         background: 0, customImage: "", customMessages: "", showTimerInMenuBar: true,
+        ignoredMicApps: [String](),
     ]
 }
 
@@ -76,6 +78,10 @@ final class Scheduler {
     /// Why the timer is currently frozen on its own ("In a call", "Away"...).
     private(set) var autoPauseReason: String?
     private(set) var stats = DayStats()
+    /// The app whose microphone use is pausing breaks, so the panel can offer to ignore it.
+    private(set) var micApp: NSRunningApplication?
+    /// "Resume anyway": ignore the current auto-pause until its cause goes away.
+    private var overridingAutoPause = false
 
     private var breaksSinceLong = 0
     private var warned = false
@@ -151,7 +157,9 @@ final class Scheduler {
             away = nil
             save()
         }
-        if let reason = autoPause() {
+        let reason = autoPause()
+        if reason == nil { overridingAutoPause = false }
+        if let reason, !overridingAutoPause {
             autoPauseReason = reason
             HUD.hideAlerts()
             return
@@ -186,7 +194,18 @@ final class Scheduler {
     }
 
     private func autoPause() -> String? {
-        if d.bool(forKey: Key.pauseForCalls) && System.micInUse() { return "In a call" }
+        micApp = nil
+        if d.bool(forKey: Key.pauseForCalls) {
+            if let apps = System.appsUsingMic() {
+                let ignored = Set(d.stringArray(forKey: Key.ignoredMicApps) ?? [])
+                if let app = apps.first(where: { !ignored.contains($0.bundleIdentifier ?? "") }) {
+                    micApp = app
+                    return "\(app.localizedName ?? "An app") is using the mic"
+                }
+            } else if System.micInUse() {
+                return "In a call"
+            }
+        }
         if d.bool(forKey: Key.pauseForVideo) && System.videoPlaying() { return "Watching a video" }
         if d.bool(forKey: Key.pauseForFullscreen) && System.frontAppIsFullscreen() { return "Fullscreen app" }
         return nil
@@ -252,6 +271,20 @@ final class Scheduler {
         if phase == .onBreak { endBreak(completed: false) }
         HUD.hideAlerts()
         pausedUntil = minutes.map { .now.addingTimeInterval(Double($0) * 60) } ?? .distantFuture
+    }
+
+    /// Keep counting even though a smart-pause condition is active.
+    func resumeAnyway() {
+        overridingAutoPause = true
+        autoPauseReason = nil
+    }
+
+    /// Never pause for this app's microphone use again (dictation tools keep the mic open).
+    func ignoreMicApp() {
+        guard let id = micApp?.bundleIdentifier else { return }
+        d.set((d.stringArray(forKey: Key.ignoredMicApps) ?? []) + [id], forKey: Key.ignoredMicApps)
+        micApp = nil
+        autoPauseReason = nil
     }
 
     func resume() {

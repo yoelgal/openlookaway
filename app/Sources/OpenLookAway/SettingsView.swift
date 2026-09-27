@@ -195,6 +195,7 @@ private struct SmartPausePane: View {
     @AppStorage(Key.pauseForVideo) private var video = false
     @AppStorage(Key.pauseForFullscreen) private var fullscreen = false
     @AppStorage(Key.idleResetMinutes) private var idleReset = 5
+    @State private var ignored = UserDefaults.standard.stringArray(forKey: Key.ignoredMicApps) ?? []
 
     var body: some View {
         Section {
@@ -206,6 +207,25 @@ private struct SmartPausePane: View {
         } footer: {
             Text("Calls are detected when any app is using your microphone. Video playback is detected when an app keeps your display awake.")
                 .foregroundStyle(.secondary)
+        }
+        if !ignored.isEmpty {
+            Section {
+                ForEach(ignored, id: \.self) { id in
+                    HStack {
+                        Text(NSWorkspace.shared.urlForApplication(withBundleIdentifier: id)?.deletingPathExtension().lastPathComponent ?? id)
+                        Spacer()
+                        Button("Remove") {
+                            ignored.removeAll { $0 == id }
+                            UserDefaults.standard.set(ignored, forKey: Key.ignoredMicApps)
+                        }
+                    }
+                }
+            } header: {
+                Text("Apps that never pause breaks")
+            } footer: {
+                Text("Dictation apps keep the microphone open all the time. Use \"Ignore\" in the menu bar panel to add one here.")
+                    .foregroundStyle(.secondary)
+            }
         }
         Section {
             Picker("Count it as a break after", selection: $idleReset) {

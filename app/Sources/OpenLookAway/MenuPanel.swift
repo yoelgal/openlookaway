@@ -75,7 +75,17 @@ struct MenuPanel: View {
             .opacity(s.isPaused || s.autoPauseReason != nil ? 0.5 : 1)
 
             if s.isPaused || s.autoPauseReason != nil {
-                Text(s.status).font(.system(size: 12)).foregroundStyle(.secondary)
+                Text(s.status).font(.system(size: 12)).foregroundStyle(.secondary).multilineTextAlignment(.center)
+            }
+            if let reason = s.autoPauseReason, reason != "Away" {
+                HStack(spacing: 8) {
+                    if let app = s.micApp {
+                        Button { s.ignoreMicApp() } label: { Text("Ignore \(app.localizedName ?? "this app")").frame(maxWidth: .infinity) }
+                    }
+                    Button { s.resumeAnyway() } label: { Text("Resume anyway").frame(maxWidth: .infinity) }
+                }
+                .buttonStyle(Secondary())
+                .lineLimit(1)
             }
 
             Button {

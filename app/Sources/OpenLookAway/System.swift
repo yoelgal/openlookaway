@@ -27,6 +27,33 @@ enum System {
         return running != 0
     }
 
+    /// Regular apps (not system daemons like the "Hey Siri" listener) recording from any microphone.
+    /// nil when macOS can't report per-process input (before 14.2); callers fall back to `micInUse()`.
+    static func appsUsingMic() -> [NSRunningApplication]? {
+        var addr = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwarePropertyProcessObjectList,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain)
+        var size: UInt32 = 0
+        let system = AudioObjectID(kAudioObjectSystemObject)
+        guard AudioObjectGetPropertyDataSize(system, &addr, 0, nil, &size) == noErr else { return nil }
+        var ids = [AudioObjectID](repeating: 0, count: Int(size) / MemoryLayout<AudioObjectID>.size)
+        guard AudioObjectGetPropertyData(system, &addr, 0, nil, &size, &ids) == noErr else { return nil }
+        return ids.compactMap { id in
+            var running: UInt32 = 0, pid: pid_t = 0
+            var s = UInt32(MemoryLayout<UInt32>.size)
+            var a = AudioObjectPropertyAddress(mSelector: kAudioProcessPropertyIsRunningInput,
+                                               mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
+            guard AudioObjectGetPropertyData(id, &a, 0, nil, &s, &running) == noErr, running != 0 else { return nil }
+            s = UInt32(MemoryLayout<pid_t>.size)
+            a.mSelector = kAudioProcessPropertyPID
+            guard AudioObjectGetPropertyData(id, &a, 0, nil, &s, &pid) == noErr,
+                  let app = NSRunningApplication(processIdentifier: pid), app.bundleIdentifier != nil,
+                  app.bundleURL?.pathExtension == "app" else { return nil }
+            return app
+        }
+    }
+
     /// True when the frontmost app has a window covering a whole screen (videos, games, presentations).
     static func frontAppIsFullscreen() -> Bool {
         guard let pid = NSWorkspace.shared.frontmostApplication?.processIdentifier,
