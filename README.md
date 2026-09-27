@@ -6,7 +6,7 @@
 
 <p align="center"><a href="https://lookaway.yoelgal.com">lookaway.yoelgal.com</a></p>
 
-<p align="center"><a href="https://lookaway.yoelgal.com/assets/demo.mp4"><img src="site/assets/demo.jpg" width="720" alt="Watch the 25-second demo"></a><br><sub>▶ Watch the 25-second demo · <a href="site/assets/demo-sound-credits.txt">sound credits</a></sub></p>
+<p align="center"><a href="https://lookaway.yoelgal.com/assets/demo.mp4"><img src="site/assets/demo.gif" width="720" alt="OpenLookAway demo: the heads-up card, the cursor countdown, then the screen blurs into a break"></a><br><sub>▶ <a href="https://lookaway.yoelgal.com/assets/demo.mp4">Watch the full 25-second demo with sound</a> · <a href="site/assets/demo-sound-credits.txt">sound credits</a></sub></p>
 
 ## Install
 
