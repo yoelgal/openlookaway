@@ -6,7 +6,7 @@
 
 <p align="center"><a href="https://lookaway.yoelgal.com">lookaway.yoelgal.com</a></p>
 
-<p align="center"><a href="https://lookaway.yoelgal.com/assets/demo.mp4"><img src="site/assets/demo.jpg" width="720" alt="Watch the 22-second demo"></a><br><sub>▶ Watch the 22-second demo</sub></p>
+<p align="center"><a href="https://lookaway.yoelgal.com/assets/demo.mp4"><img src="site/assets/demo.jpg" width="720" alt="Watch the 25-second demo"></a><br><sub>▶ Watch the 25-second demo · <a href="site/assets/demo-sound-credits.txt">sound credits</a></sub></p>
 
 ## Install
 

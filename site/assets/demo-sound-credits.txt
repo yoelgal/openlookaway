@@ -1,0 +1,26 @@
+OpenLookAway demo — soundtrack credits
+
+Everything you hear is a real recording, released under CC0 (public domain). No synthesizers.
+
+Music (VSCO 2 Community Edition, Versilian Studios, CC0 — https://github.com/sgossner/VSCO-2-CE):
+  Marimba (Outrigger mallets), Upright Piano (sampled by Simon Dalzell / Ivy Audio), Solo Contrabass pizzicato
+
+Object hits (Freesound, each verified CC0 on its page):
+  [coins] Coins Being Dropped-Assorted by TheWoodlandNomad — https://freesound.org/people/TheWoodlandNomad/sounds/363090/
+  [glass] Drinking Glasses contact (Clink) by EpicWizard — https://freesound.org/people/EpicWizard/sounds/325195/
+  [glass] Wine Glass Toast Clink by BennettFilmTeacher — https://freesound.org/people/BennettFilmTeacher/sounds/518598/
+  [glass] Glass_Clink.aif by kbnevel — https://freesound.org/people/kbnevel/sounds/119839/
+  [keyboard] MECH-KEYBOARD-01.wav by newagesoup — https://freesound.org/people/newagesoup/sounds/348239/
+  [keyboard] Typing on a keyboard by SamsterBirdies — https://freesound.org/people/SamsterBirdies/sounds/489424/
+  [keys] key jingle by JohnsonBrandEditing — https://freesound.org/people/JohnsonBrandEditing/sounds/173943/
+  [keys] Keys jingling by Lightnessko — https://freesound.org/people/Lightnessko/sounds/390324/
+  [marble] Ball in hole.wav by NeatoEnt — https://freesound.org/people/NeatoEnt/sounds/458136/
+  [marble] Ball on table.wav by NeatoEnt — https://freesound.org/people/NeatoEnt/sounds/458137/
+  [marble] Drops and bounces by deraj — https://freesound.org/people/deraj/sounds/202546/
+  [stamp] es-stamp.wav by eddies2000 — https://freesound.org/people/eddies2000/sounds/448474/
+  [switch] Light Switch by TheWoodlandNomad — https://freesound.org/people/TheWoodlandNomad/sounds/363084/
+  [switch] Light Switch ON / OFF by FillSoko — https://freesound.org/people/FillSoko/sounds/257958/
+  [wood] Knocking on Wood Door (1) by Flem0527 — https://freesound.org/people/Flem0527/sounds/629987/
+  [wood] door_knock.wav by wjtaylor — https://freesound.org/people/wjtaylor/sounds/268500/
+
+Voice: Kokoro TTS (voice af_heart). Video: HyperFrames. Soundtrack assembled in Python (build_score.py).
